@@ -1,0 +1,22 @@
+creating the user table:
+
+CREATE TABLE `pff`.`user` (
+  `user_id` VARCHAR(64) NOT NULL,
+  `username` VARCHAR(45) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `password` VARCHAR(255) NOT NULL,
+  `forename` VARCHAR(255) NOT NULL,
+  `surname` VARCHAR(255) NOT NULL,
+  `dob` DATETIME NOT NULL,
+  `address` VARCHAR(255) NOT NULL,
+  `current_balance` DECIMAL(65,2) NOT NULL,
+  PRIMARY KEY (`user_id`),
+  UNIQUE INDEX `user_id_UNIQUE` (`user_id` ASC) VISIBLE);
+
+creating the security questions table:
+
+CREATE TABLE `pff`.`security_questions` (
+  `user_id` VARCHAR(64) NOT NULL,
+  `question` VARCHAR(255) NOT NULL,
+  `answer` VARCHAR(255) NOT NULL,
+  UNIQUE INDEX `user_id_UNIQUE` (`user_id` ASC));

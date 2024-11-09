@@ -1,13 +1,11 @@
 package main
 
 import (
-	"golang/auth"
-	"net/http"
-
-	// "golang/db"
 	"database/sql"
 	"fmt"
+	"golang/auth"
 	"log"
+	"net/http"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -30,7 +28,6 @@ func main() {
 	}
 	defer db.Close()
 
-	// Test the connection
 	if err := db.Ping(); err != nil {
 		log.Fatal(err)
 	}
