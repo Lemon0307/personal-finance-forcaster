@@ -15,11 +15,12 @@ func main() {
 	http.HandleFunc("/login", auth.LoginHandler)
 
 	config := mysql.Config{
-		User:   "root",
-		Passwd: "Lemonadetv2027!?",
-		Net:    "tcp",
-		Addr:   "localhost:3306",
-		DBName: "pff",
+		User:                 "root",
+		Passwd:               "Lemonadetv2027!?",
+		Net:                  "tcp",
+		Addr:                 "localhost:3306",
+		DBName:               "pff",
+		AllowNativePasswords: true,
 	}
 
 	db, err := sql.Open("mysql", config.FormatDSN())

@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"net/http"
 	"fmt"
+	"net/http"
 )
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {

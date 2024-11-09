@@ -22,26 +22,31 @@ import (
 
 func (user *User) GenerateUserID() string {
 	res := uuid.New()
-	fmt.Println(res.String())
 	return res.String()
 }
 
-func (user *User) ValidateSignUp(db *sql.DB) (bool, error) {
+func (user *User) ValidateSignUp(db *sql.DB) bool {
 	var res bool
 	query := "SELECT * FROM user WHERE email = ?"
 	err := db.QueryRow(query, user.Email).Scan(&res)
 	if err != nil {
-		return !res, err
+		return !res
 	}
-	return true, nil
+	return true
 }
 
 // user methods
 
 // password handling methods
 
-func ConfirmPassword(password string, confirm_password string) bool {
-	return password == confirm_password
+func (user User) ValidatePassword() bool {
+	var res bool = true
+	// rx := "[A-Z]+[a-z]+[0-9]"
+	if user.Password != user.ConfirmPassword {
+		return false
+	}
+	// regexp.Match(rx, []byte(user.Password))
+	return res
 }
 
 func GenerateSalt(size int) ([]byte, error) {
@@ -67,24 +72,12 @@ func (user *User) HashAndSaltPassword() {
 
 // password handling methods
 
-// security questions methods
-
-func GenerateSecurityQID(sq Security_Questions) string {
-	res, err := uuid.Parse(sq.Question + sq.Answer)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return res.String()
-}
-
-// security questions methods
-
 // parsing methods
 
 func (date *Date) UnmarshalJSON(b []byte) error {
 	s := string(b[1 : len(b)-1])
 
-	parsedTime, err := time.Parse("02-01-2006", s)
+	parsedTime, err := time.Parse("2006-01-02", s)
 	if err != nil {
 		return fmt.Errorf("unable to parse date: %v", err)
 	}
@@ -99,14 +92,17 @@ func (date *Date) UnmarshalJSON(b []byte) error {
 
 func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
+	var err error
+
 	// db connection
 
 	config := mysql.Config{
-		User:   "root",
-		Passwd: "Lemonadetv2027!?",
-		Net:    "tcp",
-		Addr:   "localhost:3306",
-		DBName: "pff",
+		User:                 "root",
+		Passwd:               "Lemonadetv2027!?",
+		Net:                  "tcp",
+		Addr:                 "localhost:3306",
+		DBName:               "pff",
+		AllowNativePasswords: true,
 	}
 
 	db, err := sql.Open("mysql", config.FormatDSN())
@@ -115,28 +111,84 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer db.Close()
 
-	if err := db.Ping(); err != nil {
+	if err = db.Ping(); err != nil {
 		log.Fatal(err)
 	}
 
 	// db connection
 
-	var account Account
-	err2 := json.NewDecoder(r.Body).Decode(&account)
-	if err2 != nil {
+	var account *Account
+	err = json.NewDecoder(r.Body).Decode(&account)
+	if err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
-	fmt.Println(account.User.GenerateUserID())
-	account.User.HashAndSaltPassword()
-	res, err := account.User.ValidateSignUp(db)
-	if err != nil {
-		log.Fatal(err)
+	res := account.User.ValidateSignUp(db)
+	if res {
+		if account.User.ValidatePassword() {
+			account.User.HashAndSaltPassword()
+			account.UserID = account.User.GenerateUserID()
+			fmt.Println(account.UserID)
+			fmt.Println(account)
+
+			create_user_query, err := db.Exec(`INSERT INTO user (user_id, username, email, password,
+			forename, surname, dob, address, current_balance) VALUES 
+			(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				account.UserID, account.User.Username, account.User.Email, account.User.Password, account.User.Forename,
+				account.User.Surname, account.User.DOB.Time, account.User.Address, account.User.CurrentBalance)
+			if err != nil {
+				http.Error(w, "Could not insert user data into database", http.StatusInternalServerError)
+				log.Fatal(err)
+			}
+
+			create_sq_query, err := db.Exec(`INSERT INTO security_questions
+			(user_id, question, answer) VALUES (?, ?, ?)`, account.UserID,
+				account.Security_Questions.Question, account.Security_Questions.Answer)
+			if err != nil {
+				http.Error(w, "Could not insert sq data into database", http.StatusInternalServerError)
+				log.Fatal(err)
+			}
+
+			fmt.Println("$1 rows affected in Users Table, $2 rows affected in Security Questions table", create_user_query, create_sq_query)
+
+			w.Header().Set("Content-Type", "application/json")
+			response := Response{
+				Message:    "Account created!",
+				StatusCode: 201,
+			}
+
+			err = json.NewEncoder(w).Encode(response)
+			if err != nil {
+				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+				return
+			}
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			response := Response{
+				Message:    "Password does not match confirm password",
+				StatusCode: 400,
+			}
+
+			err := json.NewEncoder(w).Encode(response)
+			if err != nil {
+				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+				return
+			}
+		}
 	} else {
-		if res {
-			
+		w.Header().Set("Content-Type", "application/json")
+		response := Response{
+			Message:    "A user with this email already has an account, please try again",
+			StatusCode: 400,
+		}
+
+		err := json.NewEncoder(w).Encode(response)
+		if err != nil {
+			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+			return
 		}
 	}
+	fmt.Println(account)
 }
 
 // main sign up process
