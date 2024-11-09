@@ -128,15 +128,15 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println(account.User.GenerateUserID())
-	// account.User.HashAndSaltPassword()
-	// res, err := account.User.ValidateSignUp(db)
-	// if err != nil {
-	// 	log.Fatal(err)
-	// } else {
-	// 	if res {
-
-	// 	}
-	// }
+	account.User.HashAndSaltPassword()
+	res, err := account.User.ValidateSignUp(db)
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		if res {
+			
+		}
+	}
 }
 
 // main sign up process
