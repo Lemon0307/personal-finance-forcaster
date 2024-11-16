@@ -15,8 +15,7 @@ CREATE TABLE `pff`.`user` (
 
 creating the security questions table:
 
-CREATE TABLE `pff`.`security_questions` (
-  `user_id` VARCHAR(64) NOT NULL,
+CREATE TABLE `pff`.`securiy` (
+  `user_id` VARCHAR(255) NOT NULL,
   `question` VARCHAR(255) NOT NULL,
-  `answer` VARCHAR(255) NOT NULL,
-  UNIQUE INDEX `user_id_UNIQUE` (`user_id` ASC));
+  `answer` VARCHAR(255) NOT NULL);

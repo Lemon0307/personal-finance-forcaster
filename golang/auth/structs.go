@@ -2,6 +2,8 @@ package auth
 
 import (
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type User struct {
@@ -24,7 +26,7 @@ type Security_Questions struct {
 type Account struct {
 	UserID             string
 	User               User               `json:"user"`
-	Security_Questions Security_Questions `json:"security_questions"`
+	Security_Questions []Security_Questions `json:"security_questions"`
 }
 
 type Date struct {
@@ -34,4 +36,9 @@ type Date struct {
 type Response struct {
 	Message    string
 	StatusCode int
+}
+
+type Claims struct {
+	UserID string `json:"user_id"`
+	jwt.RegisteredClaims
 }

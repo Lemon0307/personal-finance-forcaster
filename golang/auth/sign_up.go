@@ -25,14 +25,14 @@ func (user *User) GenerateUserID() string {
 	return res.String()
 }
 
-func (user *User) ValidateSignUp(db *sql.DB) bool {
+func (user *User) ValidateSignUp(db *sql.DB) (bool, error) {
 	var res bool
-	query := "SELECT * FROM user WHERE email = ?"
+	query := "SELECT EXISTS(SELECT * FROM user WHERE email = ?)"
 	err := db.QueryRow(query, user.Email).Scan(&res)
 	if err != nil {
-		return !res
+		return false, err
 	}
-	return true
+	return !res, nil
 }
 
 // user methods
@@ -123,7 +123,11 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
-	res := account.User.ValidateSignUp(db)
+	res, err := account.User.ValidateSignUp(db)
+	if err != nil {
+		http.Error(w, "error while validating sign up", http.StatusInternalServerError)
+	}
+	fmt.Println(res)
 	if res {
 		if account.User.ValidatePassword() {
 			account.User.HashAndSaltPassword()
@@ -141,15 +145,16 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 
-			create_sq_query, err := db.Exec(`INSERT INTO security_questions
-			(user_id, question, answer) VALUES (?, ?, ?)`, account.UserID,
-				account.Security_Questions.Question, account.Security_Questions.Answer)
-			if err != nil {
-				http.Error(w, "Could not insert sq data into database", http.StatusInternalServerError)
-				log.Fatal(err)
+			for i := 0; i < len(account.Security_Questions); i++ {
+				create_sq_query, err := db.Exec(`INSERT INTO security_questions
+				(user_id, question, answer) VALUES (?, ?, ?)`, account.UserID,
+					account.Security_Questions[i].Question, account.Security_Questions[i].Answer)
+				if err != nil {
+					http.Error(w, "Could not insert sq data into database", http.StatusInternalServerError)
+					log.Fatal(err)
+				}
+				fmt.Println("$1 rows affected in Users Table, $2 rows affected in Security Questions table", create_user_query, create_sq_query)
 			}
-
-			fmt.Println("$1 rows affected in Users Table, $2 rows affected in Security Questions table", create_user_query, create_sq_query)
 
 			w.Header().Set("Content-Type", "application/json")
 			response := Response{
