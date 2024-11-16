@@ -1,8 +1,10 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -27,7 +29,7 @@ func (account *Account) GenerateJWT() (string, error) {
 	return token_string, nil
 }
 
-func (account *Account) ValidateJWT(token_string string) (*Claims, error) {
+func ValidateJWT(token_string string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(token_string, claims,
 		func(token *jwt.Token) (interface{}, error) {
@@ -49,4 +51,27 @@ func (account *Account) ValidateJWT(token_string string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+type ctxkey string
+
+const userIDkey ctxkey = "userID"
+
+func JWTAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tokenString := r.Header.Get("Authorization")
+		if tokenString == "" {
+			http.Error(w, "Missing token", http.StatusUnauthorized)
+			return
+		}
+
+		claims, err := ValidateJWT(tokenString)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), userIDkey, claims.UserID)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

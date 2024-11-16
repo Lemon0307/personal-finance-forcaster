@@ -24,8 +24,8 @@ type Security_Questions struct {
 }
 
 type Account struct {
-	UserID             string
-	User               User               `json:"user"`
+	UserID             string               `json:"user_id"`
+	User               User                 `json:"user"`
 	Security_Questions []Security_Questions `json:"security_questions"`
 }
 
