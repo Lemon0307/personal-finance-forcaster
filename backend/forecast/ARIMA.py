@@ -1,8 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# data = np.array([40, 47, 46, 44, 43, 46, 45, 47, 49, 55, 23, 45, 56])
-
 def forecast_arima(data, phi_1, theta_1, n_forecast):
     predicted_values = []
     residuals = np.zeros(len(data))
@@ -58,6 +56,3 @@ def forecast_data(x):
     forecasted_data = forecasted_values + data[-1]
 
     return forecasted_data
-
-for element in forecast_data([432.45, 1124.10, 700.33, 1929.51, 1562.34, 810.23, 842.88, 454.76, 413.17, 356.22]):
-    print(element)
