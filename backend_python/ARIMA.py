@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def forecast_arima(data, phi_1, theta_1, n_forecast):
+def forecast_arima(data, phi_1, theta_1, months):
     predicted_values = []
     residuals = np.zeros(len(data))
     
@@ -16,7 +16,7 @@ def forecast_arima(data, phi_1, theta_1, n_forecast):
     last_value = data[-1]
     last_residual = residuals[-1]
     
-    for _ in range(n_forecast):
+    for _ in range(months):
         forecast_ar = phi_1 * last_value
         forecast_ma = theta_1 * last_residual
         forecast_value = forecast_ar + forecast_ma
@@ -42,17 +42,16 @@ def estimate_ma1(data, phi_1):
     theta_1 = np.corrcoef(residuals[:-1], residuals[1:])[0, 1]
     return theta_1
 
-def forecast_data(x):
+def forecast_data(x, months):
     data = np.array(x)
     n = len(data)
-    time = np.arange(n)
 
     differenced_data = np.diff(data)
 
     phi_1 = estimate_ar1(differenced_data)
     theta_1 = estimate_ma1(differenced_data, phi_1)
-    n_forecast = 10
-    predicted_values, forecasted_values = forecast_arima(differenced_data, phi_1, theta_1, n_forecast)
+    predicted_values, forecasted_values = forecast_arima(differenced_data, phi_1, theta_1, months)
     forecasted_data = forecasted_values + data[-1]
 
     return forecasted_data
+
