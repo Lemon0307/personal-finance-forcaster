@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"golang/auth"
+	"golang/budgets"
 	"log"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 func main() {
 	http.HandleFunc("/sign_up", auth.SignUpHandler)
 	http.HandleFunc("/login", auth.LoginHandler)
+	http.HandleFunc("/budgets", budgets.BudgetHandler)
 
 	config := mysql.Config{
 		User:                 "root",
