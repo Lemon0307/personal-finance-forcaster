@@ -6,7 +6,7 @@ import (
 )
 
 func AddBudget() {
-	
+
 }
 
 func RemoveBudget() {
@@ -32,6 +32,6 @@ func BudgetHandler(w http.ResponseWriter, r *http.Request) {
 	case "budgets/update_budget":
 		UpdateBudget()
 	default:
-		log.Fatal("Something went wrong going to a URL.")
+		log.Fatal("Something went wrong with the URL.")
 	}
 }

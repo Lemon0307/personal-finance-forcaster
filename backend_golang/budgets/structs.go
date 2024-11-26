@@ -2,19 +2,19 @@ package budgets
 
 type Budget struct {
 	BudgetID   string
-	UserID     string
-	BudgetName string
-}
-
-type BudgetFeatures struct {
-	BudgetID   string
-	FeatureID  string
-	BudgetCost float32
-	Priority   float32
+	BudgetName string  `json:"budget_name"`
+	BudgetCost float32 `json:"budget_cost"`
+	Priority   float32 `json:"priority"`
 }
 
 type Feature struct {
 	FeatureID   string
-	Description string
-	DefaultCost float32
+	Description string  `json:"description"`
+	DefaultCost float32 `json:"default_cost"`
+}
+
+type ManageBudgets struct {
+	UserID  string
+	Budget  Budget    `json:"budget"`
+	Feature []Feature `json:"feature"`
 }
