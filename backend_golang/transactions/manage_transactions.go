@@ -21,10 +21,16 @@ func GetTransaction() {
 
 }
 
+func GetTransactionByID() {
+
+}
+
 func TransactionHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "transactions/":
 		GetTransaction()
+	case "transactions/{id}":
+		GetTransactionByID()
 	case "transactions/add_transaction":
 		AddTransaction()
 	case "transactions/remove_transaction":
