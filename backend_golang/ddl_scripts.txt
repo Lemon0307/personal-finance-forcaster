@@ -37,7 +37,7 @@ create table for budget_features:
 CREATE TABLE `budget_features` (
   `budget_id` varchar(255) NOT NULL,
   `feature_id` varchar(255) NOT NULL,
-  `cost_budget` varchar(255) NOT NULL,
+  `cost_budget` decimal(65, 2) NOT NULL,
   `priority` decimal(65,7) NOT NULL,
   PRIMARY KEY (`feature_id`),
   UNIQUE KEY `feature_id_UNIQUE` (`feature_id`)
@@ -48,7 +48,7 @@ create table for feature:
 CREATE TABLE `feature` (
   `feature_id` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
-  `default_cost` varchar(255) DEFAULT NULL
+  `default_cost` decimal(65, 2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
 
 create table for monthly costs:
@@ -68,7 +68,7 @@ CREATE TABLE `transactions` (
   `transaction_id` varchar(255) NOT NULL,
   `transaction_name` varchar(255) NOT NULL,
   `transaction_type` varchar(255) NOT NULL,
-  `amount` varchar(255) NOT NULL,
+  `amount` decimal(65, 2) NOT NULL,
   `date` datetime NOT NULL,
   `month` int NOT NULL,
   `year` int NOT NULL,
