@@ -9,7 +9,7 @@ type Budget struct {
 type BudgetFeatures struct {
 	BudgetID   string
 	FeatureID  string
-	CostBudget float32
+	BudgetCost float32
 	Priority   float32
 }
 
