@@ -21,10 +21,16 @@ func GetBudget() {
 
 }
 
+func GetBudgetByID() {
+	
+}
+
 func BudgetHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "budgets/":
 		GetBudget()
+	case "budgets/{id}":
+		GetBudgetByID()
 	case "budgets/add_budget":
 		AddBudget()
 	case "budgets/remove_budget":
