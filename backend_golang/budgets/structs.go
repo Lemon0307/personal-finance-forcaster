@@ -1,7 +1,6 @@
 package budgets
 
 type Budget struct {
-	BudgetID   string
 	BudgetName string  `json:"budget_name"`
 	BudgetCost float32 `json:"budget_cost"`
 	Priority   float32 `json:"priority"`
