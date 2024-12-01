@@ -12,7 +12,7 @@ CREATE TABLE `user` (
   `current_balance` decimal(65,2) NOT NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `user_id_UNIQUE` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 create table for security_questions:
 
@@ -20,28 +20,27 @@ CREATE TABLE `security_questions` (
   `user_id` varchar(255) NOT NULL,
   `question` varchar(255) NOT NULL,
   `answer` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 create table for budget:
 
 CREATE TABLE `budget` (
-  `budget_id` varchar(255) NOT NULL,
   `user_id` varchar(255) NOT NULL,
   `budget_name` varchar(255) NOT NULL,
-  PRIMARY KEY (`budget_id`),
-  UNIQUE KEY `budget_id_UNIQUE` (`budget_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  PRIMARY KEY (`budget_name`),
+  UNIQUE KEY `budget_name_UNIQUE` (`budget_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 create table for budget_features:
 
 CREATE TABLE `budget_features` (
-  `budget_id` varchar(255) NOT NULL,
+  `budget_name` varchar(255) NOT NULL,
   `feature_id` varchar(255) NOT NULL,
   `cost_budget` decimal(65, 2) NOT NULL,
   `priority` decimal(65,7) NOT NULL,
   PRIMARY KEY (`feature_id`),
   UNIQUE KEY `feature_id_UNIQUE` (`feature_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 create table for feature:
 
@@ -49,18 +48,18 @@ CREATE TABLE `feature` (
   `feature_id` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `default_cost` decimal(65, 2) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 create table for monthly costs:
 
 CREATE TABLE `monthly_costs` (
-  `budget_id` varchar(45) NOT NULL,
+  `budget_name` varchar(255) NOT NULL,
   `month` int NOT NULL,
   `year` int NOT NULL,
   PRIMARY KEY (`month`,`year`),
   UNIQUE KEY `month_UNIQUE` (`month`),
   UNIQUE KEY `year_UNIQUE` (`year`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 create table for transactions:
 
@@ -74,4 +73,4 @@ CREATE TABLE `transactions` (
   `year` int NOT NULL,
   PRIMARY KEY (`transaction_id`),
   UNIQUE KEY `transaction_id_UNIQUE` (`transaction_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
