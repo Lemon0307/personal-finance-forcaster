@@ -37,6 +37,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// db connection
 
+	// login
+
 	var account *Account
 	err = json.NewDecoder(r.Body).Decode(&account)
 	if err != nil {
