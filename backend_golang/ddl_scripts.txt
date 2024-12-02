@@ -31,21 +31,21 @@ CREATE TABLE `budget` (
   UNIQUE KEY `budget_name_UNIQUE` (`budget_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-create table for budget_features:
+create table for budget_items:
 
-CREATE TABLE `budget_features` (
+CREATE TABLE `budget_items` (
   `budget_name` varchar(255) NOT NULL,
-  `feature_id` varchar(255) NOT NULL,
+  `item_name` varchar(255) NOT NULL,
   `cost_budget` decimal(65, 2) NOT NULL,
   `priority` decimal(65,7) NOT NULL,
-  PRIMARY KEY (`feature_id`),
-  UNIQUE KEY `feature_id_UNIQUE` (`feature_id`)
+  PRIMARY KEY (`item_name`),
+  UNIQUE KEY `item_name_UNIQUE` (`item_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-create table for feature:
+create table for item:
 
-CREATE TABLE `feature` (
-  `feature_id` varchar(255) NOT NULL,
+CREATE TABLE `item` (
+  `item_name` varchar(255) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `default_cost` decimal(65, 2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
