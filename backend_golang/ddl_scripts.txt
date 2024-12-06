@@ -1,76 +1,67 @@
-create table for user:
+-- Table: User
+CREATE TABLE User (
+    user_id CHAR(36) PRIMARY KEY, -- UUID
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    forename VARCHAR(50) NOT NULL,
+    surname VARCHAR(50) NOT NULL,
+    dob DATE NOT NULL,
+    address TEXT NOT NULL,
+    current_balance DECIMAL(65, 2) NOT NULL
+);
 
-CREATE TABLE `user` (
-  `user_id` varchar(36) NOT NULL,
-  `username` varchar(45) NOT NULL,
-  `email` varchar(255) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `forename` varchar(255) NOT NULL,
-  `surname` varchar(255) NOT NULL,
-  `dob` datetime NOT NULL,
-  `address` varchar(255) NOT NULL,
-  `current_balance` decimal(65,2) NOT NULL,
-  PRIMARY KEY (`user_id`),
-  UNIQUE KEY `user_id_UNIQUE` (`user_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-- Table: Security Questions
+CREATE TABLE Security_Questions (
+    user_id CHAR(36) NOT NULL,
+    question VARCHAR(255) NOT NULL,
+    answer VARCHAR(255) NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
+);
 
-create table for security_questions:
+-- Table: Budget
+CREATE TABLE Budget (
+    budget_name VARCHAR(100) NOT NULL,
+    user_id CHAR(36) NOT NULL, -- UUID
+    PRIMARY KEY (budget_name, user_id),
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
+);
 
-CREATE TABLE `security_questions` (
-  `user_id` varchar(255) NOT NULL,
-  `question` varchar(255) NOT NULL,
-  `answer` varchar(255) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-- Table: Budget Items
+CREATE TABLE Budget_Items (
+    item_name VARCHAR(100) NOT NULL,
+    budget_name VARCHAR(100) NOT NULL,
+    user_id CHAR(36) NOT NULL, -- UUID
+    description TEXT,
+    budget_cost DECIMAL(10, 2) NOT NULL,
+    priority INT NOT NULL,
+    PRIMARY KEY (item_name, budget_name, user_id),
+    FOREIGN KEY (budget_name, user_id) REFERENCES Budget(budget_name, user_id) ON DELETE CASCADE
+);
 
-create table for budget:
+-- Table: Monthly Costs
+CREATE TABLE Monthly_Costs (
+    user_id CHAR(36) NOT NULL,
+    month INT NOT NULL,
+    year INT NOT NULL,
+    item_name VARCHAR(255) NOT NULL,
+    PRIMARY KEY (user_id, month, year, item_name),  -- Composite Primary Key to allow multiple items per month/year
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (item_name, user_id) REFERENCES Budget_Items(item_name, user_id) ON DELETE CASCADE
+);
 
-CREATE TABLE `budget` (
-  `user_id` varchar(255) NOT NULL,
-  `budget_name` varchar(255) NOT NULL,
-  PRIMARY KEY (`budget_name`),
-  UNIQUE KEY `budget_name_UNIQUE` (`budget_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-create table for budget_items:
 
-CREATE TABLE `budget_items` (
-  `budget_name` varchar(255) NOT NULL,
-  `item_name` varchar(255) NOT NULL,
-  `cost_budget` decimal(65, 2) NOT NULL,
-  `priority` decimal(65,7) NOT NULL,
-  PRIMARY KEY (`item_name`),
-  UNIQUE KEY `item_name_UNIQUE` (`item_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-create table for item:
-
-CREATE TABLE `item` (
-  `item_name` varchar(255) NOT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `default_cost` decimal(65, 2) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-create table for monthly costs:
-
-CREATE TABLE `monthly_costs` (
-  `budget_name` varchar(255) NOT NULL,
-  `month` int NOT NULL,
-  `year` int NOT NULL,
-  PRIMARY KEY (`month`,`year`),
-  UNIQUE KEY `month_UNIQUE` (`month`),
-  UNIQUE KEY `year_UNIQUE` (`year`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-create table for transactions:
-
-CREATE TABLE `transactions` (
-  `transaction_id` varchar(255) NOT NULL,
-  `transaction_name` varchar(255) NOT NULL,
-  `transaction_type` varchar(255) NOT NULL,
-  `amount` decimal(65, 2) NOT NULL,
-  `date` datetime NOT NULL,
-  `month` int NOT NULL,
-  `year` int NOT NULL,
-  PRIMARY KEY (`transaction_id`),
-  UNIQUE KEY `transaction_id_UNIQUE` (`transaction_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+-- Table: Transactions
+CREATE TABLE Transactions (
+    transaction_id CHAR(36) PRIMARY KEY, -- UUID
+    user_id CHAR(36) NOT NULL, -- UUID
+    transaction_name VARCHAR(100) NOT NULL,
+    transaction_type VARCHAR(50) NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    month INT NOT NULL,
+    year INT NOT NULL,
+    date DATE NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (month, year) REFERENCES Monthly_Costs(month, year) ON DELETE CASCADE
+);
