@@ -1,6 +1,6 @@
 -- Table: User
-CREATE TABLE User (
-    user_id CHAR(36) PRIMARY KEY, -- UUID
+CREATE TABLE IF NOT EXISTS User (
+    user_id CHAR(36) PRIMARY KEY,
     username VARCHAR(50) NOT NULL,
     email VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE User (
 );
 
 -- Table: Security Questions
-CREATE TABLE Security_Questions (
+CREATE TABLE IF NOT EXISTS Security_Questions (
     user_id CHAR(36) NOT NULL,
     question VARCHAR(255) NOT NULL,
     answer VARCHAR(255) NOT NULL,
@@ -20,42 +20,42 @@ CREATE TABLE Security_Questions (
 );
 
 -- Table: Budget
-CREATE TABLE Budget (
-    budget_name VARCHAR(100) NOT NULL,
-    user_id CHAR(36) NOT NULL, -- UUID
-    PRIMARY KEY (budget_name, user_id),
+CREATE TABLE IF NOT EXISTS Budget (
+    budget_name VARCHAR(100) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
 );
 
 -- Table: Budget Items
-CREATE TABLE Budget_Items (
-    item_name VARCHAR(100) NOT NULL,
-    budget_name VARCHAR(100) NOT NULL,
-    user_id CHAR(36) NOT NULL, -- UUID
+CREATE TABLE IF NOT EXISTS Budget_Items (
+    item_name VARCHAR(100) PRIMARY KEY,
+    budget_name VARCHAR(100) NOT NULL, 
+    user_id CHAR(36) NOT NULL,
     description TEXT,
     budget_cost DECIMAL(10, 2) NOT NULL,
     priority INT NOT NULL,
-    PRIMARY KEY (item_name, budget_name, user_id),
-    FOREIGN KEY (budget_name, user_id) REFERENCES Budget(budget_name, user_id) ON DELETE CASCADE
+    FOREIGN KEY (budget_name) REFERENCES Budget(budget_name) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
 );
 
 -- Table: Monthly Costs
-CREATE TABLE Monthly_Costs (
+CREATE TABLE IF NOT EXISTS Monthly_Costs (
     user_id CHAR(36) NOT NULL,
     month INT NOT NULL,
     year INT NOT NULL,
-    item_name VARCHAR(255) NOT NULL,
-    PRIMARY KEY (user_id, month, year, item_name),  -- Composite Primary Key to allow multiple items per month/year
+    item_name VARCHAR(100) NOT NULL,
+    cost DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (item_name, user_id) REFERENCES Budget_Items(item_name, user_id) ON DELETE CASCADE
+    FOREIGN KEY (item_name) REFERENCES Budget_Items(item_name) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, month, year)
 );
 
-
+CREATE INDEX idx_month_year ON Monthly_Costs(month, year);
 
 -- Table: Transactions
-CREATE TABLE Transactions (
-    transaction_id CHAR(36) PRIMARY KEY, -- UUID
-    user_id CHAR(36) NOT NULL, -- UUID
+CREATE TABLE IF NOT EXISTS Transactions (
+    transaction_id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
     transaction_name VARCHAR(100) NOT NULL,
     transaction_type VARCHAR(50) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
