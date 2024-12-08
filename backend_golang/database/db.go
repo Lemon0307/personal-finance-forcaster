@@ -88,8 +88,7 @@ CREATE TABLE IF NOT EXISTS Transactions (
 
 	return nil
 }
-
-func InitDB() {
+func InitDB() error {
 	config := mysql.Config{
 		User:                 "root",
 		Passwd:               "Lemonadetv2027!?",
@@ -102,17 +101,26 @@ func InitDB() {
 		},
 	}
 
-	DB, err := sql.Open("mysql", config.FormatDSN())
+	var err error
+	DB, err = sql.Open("mysql", config.FormatDSN())
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to open database: %v", err)
 	}
-	defer DB.Close()
 
 	if err := DB.Ping(); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to connect to database: %v", err)
 	}
-	if err := CreateTable(DB); err != nil {
-		panic(fmt.Sprintf("failed to create tables: %v", err))
-	}
+
 	fmt.Println("Connected to the database!")
+	return nil
+}
+
+func CloseDB() {
+	if DB != nil {
+		if err := DB.Close(); err != nil {
+			log.Fatal("Failed to close DB connection:", err)
+		}
+	} else {
+		log.Println("No active DB connection to close")
+	}
 }

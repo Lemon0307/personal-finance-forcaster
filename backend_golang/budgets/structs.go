@@ -5,9 +5,8 @@ type Budget struct {
 }
 
 type BudgetItems struct {
-	BudgetName  string  `json:"budget_name"`
 	ItemName    string  `json:"item_name"`
-	BudgetCost  string  `json:"budget_cost"`
+	BudgetCost  float32 `json:"budget_cost"`
 	Description string  `json:"description"`
 	Priority    float32 `json:"priority"`
 }
@@ -19,3 +18,13 @@ type ManageBudgets struct {
 }
 
 type BudgetHandler struct{}
+
+type ErrorMessage struct {
+	Message    string
+	StatusCode int
+}
+
+type Response struct {
+	Message    string
+	StatusCode int
+}

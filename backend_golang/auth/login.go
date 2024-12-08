@@ -81,7 +81,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// return error message
 		w.Header().Set("Content-Type", "application/json")
-		response := Response{
+		response := ErrorMessage{
 			Message:    err.Error(),
 			StatusCode: 400,
 		}

@@ -26,10 +26,12 @@ func (account *Account) GenerateJWT() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	fmt.Println("Generated JWT:", token_string)
 	return token_string, nil
 }
 
 func ValidateJWT(token_string string) (*Claims, error) {
+	fmt.Println(token_string)
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(token_string, claims,
 		func(token *jwt.Token) (interface{}, error) {
@@ -40,6 +42,7 @@ func ValidateJWT(token_string string) (*Claims, error) {
 		})
 
 	if err != nil {
+		fmt.Println("Error parsing token:", err)
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, fmt.Errorf("token has expired")
 		}

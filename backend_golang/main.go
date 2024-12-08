@@ -13,11 +13,12 @@ import (
 func main() {
 
 	database.InitDB()
+	defer database.CloseDB()
 
 	router := mux.NewRouter()
 	budgets.BudgetRoutes(router, &budgets.BudgetHandler{})
-	http.HandleFunc("/sign_up", auth.SignUpHandler)
-	http.HandleFunc("/login", auth.LoginHandler)
+	router.HandleFunc("/sign_up", auth.SignUpHandler).Methods("POST")
+	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
 	fmt.Println("Server started at http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", router)
 }

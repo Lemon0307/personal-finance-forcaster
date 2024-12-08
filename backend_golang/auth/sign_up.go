@@ -141,7 +141,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// return error message
 			w.Header().Set("Content-Type", "application/json")
-			response := Response{
+			response := ErrorMessage{
 				Message:    "Password does not match confirm password",
 				StatusCode: 400,
 			}
@@ -155,7 +155,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// return error message
 		w.Header().Set("Content-Type", "application/json")
-		response := Response{
+		response := ErrorMessage{
 			Message:    "A user with this email already has an account, please try again",
 			StatusCode: 400,
 		}
