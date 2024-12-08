@@ -39,6 +39,12 @@ type Response struct {
 	StatusCode int
 }
 
+type ResponseJWT struct {
+	Message    string
+	Token      string
+	StatusCode int
+}
+
 type Claims struct {
 	UserID string `json:"user_id"`
 	jwt.RegisteredClaims

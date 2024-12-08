@@ -5,6 +5,15 @@ import (
 	"net/http"
 )
 
+func GetBudget() {
+	var budget ManageBudgets
+	
+}
+
+func GetBudgetByID() {
+
+}
+
 func AddBudget() {
 
 }
@@ -15,14 +24,6 @@ func RemoveBudget() {
 
 func UpdateBudget() {
 
-}
-
-func GetBudget() {
-
-}
-
-func GetBudgetByID() {
-	
 }
 
 func BudgetHandler(w http.ResponseWriter, r *http.Request) {

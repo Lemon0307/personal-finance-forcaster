@@ -21,13 +21,16 @@ import (
 func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 	var db_hash string
 	var db_salt []byte
-	err := db.QueryRow("SELECT password, user_id, salt FROM User WHERE email = ?", account.User.Email).Scan(&db_hash, &account.UserID, &db_salt)
+	// check if user exists in db
+	err := db.QueryRow("SELECT password, user_id, salt FROM User WHERE email = ?", account.User.Email).
+		Scan(&db_hash, &account.UserID, &db_salt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, fmt.Errorf("the email or password provided isn't correct, please try again or create a new account")
 		}
 		return false, err
 	}
+	// check if password matches with password in db
 	account.User.HashPassword(db_salt)
 	if account.User.Password == db_hash {
 		return true, nil
@@ -36,9 +39,30 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 }
 
 func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
-	rows, err := db.Query("SELECT * FROM Security_Questions WHERE user_id = ?", account.UserID)
+	// queries all security questions by the user in db
+	rows, err := db.Query("SELECT question, answer FROM Security_Questions WHERE user_id = ?", account.UserID)
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer rows.Close()
 
+	var sq []Security_Questions
+	// convert sql rows into array of struct
+	for rows.Next() {
+		var question string
+		var answer string
+		if err := rows.Scan(&question, &answer); err != nil {
+			log.Fatal(err)
+		}
+		sq = append(sq, Security_Questions{question, answer})
+	}
+	// check if answers to questions match
+	for i := 0; i < len(sq); i++ {
+		if account.Security_Questions[i].Answer != sq[i].Answer {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +101,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	// check if user details are present in the db
-	res, err := account.ValidateUserAndPassword(db)
+	user_password_ok, err := account.ValidateUserAndPassword(db)
 	if err != nil {
 		// return error message
 		w.Header().Set("Content-Type", "application/json")
@@ -92,7 +116,28 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if res {
-		account.ValidateSecurityQuestions(db)
+	if user_password_ok {
+		// checks if security questions match
+		security_questions_ok, _ := account.ValidateSecurityQuestions(db)
+		if security_questions_ok {
+			// generates jwt token for the user to authenticate
+			token, err := account.GenerateJWT()
+			if err != nil {
+				log.Fatal(err)
+			}
+			// return message
+			w.Header().Set("Content-Type", "application/json")
+			response := ResponseJWT{
+				Message:    "Successfully logged in!",
+				Token:      token,
+				StatusCode: 201,
+			}
+			// builds json response
+			err = json.NewEncoder(w).Encode(response)
+			if err != nil {
+				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+				return
+			}
+		}
 	}
 }
