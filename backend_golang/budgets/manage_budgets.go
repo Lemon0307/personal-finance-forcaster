@@ -22,6 +22,18 @@ func (budget *Budget) ValidateBudget(db *sql.DB, user_id string) (bool, error) {
 	return !res, nil
 }
 
+func BudgetExists(db *sql.DB, user_id string, budget_name string) bool {
+	var res bool
+	_ = db.QueryRow("SELECT * FROM Budgets WHERE budget_name = ? AND user_id = ?", budget_name, user_id).Scan(&res)
+	return res
+}
+
+func ItemExists(db *sql.DB, user_id string, item_name string) bool {
+	var res bool
+	_ = db.QueryRow("SELECT * FROM Budget_Items WHERE item_name = ? AND user_id = ?", item_name, user_id).Scan(&res)
+	return res
+}
+
 func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	var err error
 	// check if token is valid or expired
@@ -51,14 +63,14 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	}
 	if budget_ok {
 		// add budget
-		add_budget_query, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
+		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
 			user_id, manageBudget.Budget.BudgetName)
 		if err != nil {
 			log.Fatal(err)
 		}
 		// add all budget items
 		for i := 0; i < len(manageBudget.BudgetItems); i++ {
-			add_budget_items_query, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
+			_, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
 			 item_name, description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
 				user_id,
 				manageBudget.Budget.BudgetName,
@@ -69,7 +81,6 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println("$1 rows affected in Users Table, $2 rows affected in Security Questions table", add_budget_query, add_budget_items_query)
 		}
 		// return success message
 		w.Header().Set("Content-Type", "application/json")
@@ -99,7 +110,6 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
-
 	var err error
 	// check if token is valid or expired
 	token := r.Header.Get("Authorization")
@@ -111,7 +121,7 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	// get user id from jwt
 	user_id := claims.UserID
 
-	// create new manage budget session (modified join to left join)
+	// query all budgets and its budget items (modified join to left join)
 	rows, err := database.DB.Query(`
         SELECT budget.user_id, budget.budget_name, 
                budget_items.item_name, budget_items.budget_cost, 
@@ -123,9 +133,11 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// make a hash map to group budget with its budget items
 	var budgets = make(map[string]*ManageBudgets)
 
 	for rows.Next() {
+		// add one row of budgets into structs
 		var user_id string
 		var budget Budget
 		var budget_item BudgetItems
@@ -133,8 +145,8 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 			&budget_item.BudgetCost, &budget_item.Description, &budget_item.Priority); err != nil {
 			log.Fatal(err)
 		}
-
-		if _, exists := budgets[budget.BudgetName]; !exists {
+		// add budget to the hash map if budget doesn't exist in the hash map
+		if _, budget_exists := budgets[budget.BudgetName]; !budget_exists {
 			budgets[budget.BudgetName] = &ManageBudgets{
 				UserID: user_id,
 				Budget: Budget{
@@ -143,7 +155,7 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 				BudgetItems: []BudgetItems{},
 			}
 		}
-
+		// group all budget items into one budget
 		if budget_item.ItemName != "" {
 			budgets[budget.BudgetName].BudgetItems = append(budgets[budget.BudgetName].BudgetItems, BudgetItems{
 				ItemName:    budget_item.ItemName,
@@ -158,6 +170,7 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// group all budgets into an array of budgets
 	var budgets_array []ManageBudgets
 	for _, budget := range budgets {
 		budgets_array = append(budgets_array, *budget)
@@ -166,16 +179,199 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(budgets_array)
 }
-func (budget *BudgetHandler) RemoveBudget(w http.ResponseWriter, r *http.Request) {
 
+func (budget *BudgetHandler) RemoveBudget(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	budget_name := vars["budget_name"]
+	// check if token is valid or expired
+	token := r.Header.Get("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+	claims, err := auth.ValidateJWT(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// get user id from jwt
+	user_id := claims.UserID
+
+	// check if budget exists
+	if BudgetExists(database.DB, user_id, budget_name) {
+		// delete budget from db
+		_, err := database.DB.Exec(`DELETE FROM Budget WHERE user_id = ? AND budget_name = ?`, user_id, budget_name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// return success message
+		response := Response{
+			Message:    "Successfully deleted budget",
+			StatusCode: 201,
+		}
+		// make json response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	} else {
+		// return error message
+		response := ErrorMessage{
+			Message:    "Cannot delete budget because budget does not exist",
+			StatusCode: 401,
+		}
+		// make json response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
+}
+
+func (budget *BudgetHandler) RemoveBudgetItems(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	budget_name := vars["budget_name"]
+	item_name := vars["item_name"]
+	// check if token is valid or expired
+	token := r.Header.Get("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+	claims, err := auth.ValidateJWT(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// get user id from jwt
+	user_id := claims.UserID
+
+	// check if item exists in the db
+	if ItemExists(database.DB, user_id, item_name) {
+		// delete item from db
+		_, err := database.DB.Query(`DELETE FROM Budget_Items WHERE user_id = ? 
+		AND budget_name = ? AND item_name = ?`, user_id, budget_name, item_name)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// return success message
+		response := Response{
+			Message:    "Successfully delete budget item",
+			StatusCode: 201,
+		}
+		// make json response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	} else {
+		// return error message
+		response := ErrorMessage{
+			Message: "Cannot delete budget item because budget item does not exist",
+		}
+		// make json response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
 }
 func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	budget_name := vars["budget_name"]
+	// check if token is valid or expired
+	token := r.Header.Get("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+	claims, err := auth.ValidateJWT(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// get user id from jwt
+	user_id := claims.UserID
+
+	var manageBudget ManageBudgets
+	err = json.NewDecoder(r.Body).Decode(&manageBudget)
+	if err != nil {
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+	update_budget, err := database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
+	budget_name = ? AND user_id = ?`, manageBudget.Budget.BudgetName, budget_name, user_id)
+	fmt.Println("$1 Rows affected", update_budget)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	response := Response{
+		Message:    "Successfully updated budget",
+		StatusCode: 201,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	budget_name := vars["budget_name"]
+	item_name := vars["item_name"]
+	// check if token is valid or expired
+	token := r.Header.Get("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+	claims, err := auth.ValidateJWT(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// get user id from jwt
+	user_id := claims.UserID
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var budget_item BudgetItems
+	_ = json.NewDecoder(r.Body).Decode(&budget_item)
+
+	query := "UPDATE Budget_Items SET"
+	args := []interface{}{}
+	columns := []string{}
+
+	if budget_item.BudgetCost != 0 {
+		columns = append(columns, "budget_cost = ?")
+		args = append(args, budget_item.BudgetCost)
+	}
+	if budget_item.Description != "" {
+		columns = append(columns, "description = ?")
+		args = append(args, budget_item.Description)
+	}
+	if budget_item.Priority != 0 {
+		columns = append(columns, "priority = ?")
+		args = append(args, budget_item.Priority)
+	}
+
+	if len(columns) > 0 {
+		query += " " + strings.Join(columns, ", ")
+		query += " WHERE user_id = ? AND budget_name = ? AND item_name = ?"
+
+		args = append(args, user_id, budget_name, item_name)
+
+		_, err = database.DB.Exec(query, args...)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		response := Response{
+			Message:    "Successfully updated budget item",
+			StatusCode: 201,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	} else {
+		response := ErrorMessage{
+			Message:    "There are no updates to the budget item",
+			StatusCode: 401,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	}
 
 }
 
 func BudgetRoutes(router *mux.Router, budgetService BudgetService) {
 	router.HandleFunc("/budgets", budgetService.GetBudget).Methods("GET")
-	router.HandleFunc("/budgets/remove_budget/{id}", budgetService.RemoveBudget).Methods("DELETE")
 	router.HandleFunc("/budgets/add_budget", budgetService.AddBudget).Methods("POST")
-	router.HandleFunc("/budgets/update_budget/{id}", budgetService.UpdateBudget).Methods("PUT")
+	router.HandleFunc("/budgets/update_budget/{budget_name}", budgetService.UpdateBudget).Methods("PUT")
+	router.HandleFunc("/budgets/update_budget_item/{budget_name}/{item_name}", budgetService.UpdateBudgetItems).Methods("PUT")
+	router.HandleFunc("/budgets/remove_budget/{budget_name}", budgetService.RemoveBudget).Methods("DELETE")
+	router.HandleFunc("/budgets/remove_budget_item/{budget_name}/{item_name}", budgetService.RemoveBudgetItems).Methods("DELETE")
 }
