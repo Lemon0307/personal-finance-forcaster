@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"golang/database"
 	"log"
 	"net/http"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 // func (user *User) UserExists(db *sql.DB) (bool, error) {
@@ -69,29 +68,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// db connection
-
-	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "Lemonadetv2027!?",
-		Net:                  "tcp",
-		Addr:                 "localhost:3306",
-		DBName:               "pff",
-		AllowNativePasswords: true,
-	}
-
-	db, err := sql.Open("mysql", config.FormatDSN())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	if err = db.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
-	// db connection
-
 	// login
 
 	var account Account
@@ -101,7 +77,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	// check if user details are present in the db
-	user_password_ok, err := account.ValidateUserAndPassword(db)
+	user_password_ok, err := account.ValidateUserAndPassword(database.DB)
 	if err != nil {
 		// return error message
 		w.Header().Set("Content-Type", "application/json")
@@ -118,7 +94,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if user_password_ok {
 		// checks if security questions match
-		security_questions_ok, _ := account.ValidateSecurityQuestions(db)
+		security_questions_ok, _ := account.ValidateSecurityQuestions(database.DB)
 		if security_questions_ok {
 			// generates jwt token for the user to authenticate
 			token, err := account.GenerateJWT()

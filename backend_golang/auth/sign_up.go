@@ -3,6 +3,8 @@ package auth
 import (
 	// "fmt"
 
+	"golang/database"
+
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -11,7 +13,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 )
 
@@ -71,29 +72,6 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
-	// db connection
-
-	config := mysql.Config{
-		User:                 "root",
-		Passwd:               "Lemonadetv2027!?",
-		Net:                  "tcp",
-		Addr:                 "localhost:3306",
-		DBName:               "pff",
-		AllowNativePasswords: true,
-	}
-
-	db, err := sql.Open("mysql", config.FormatDSN())
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	if err = db.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
-	// db connection
-
 	var account *Account
 	// parse json into account struct
 	err = json.NewDecoder(r.Body).Decode(&account)
@@ -102,7 +80,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// check if data provided exists in the user table
-	res, err := account.User.ValidateSignUp(db)
+	res, err := account.User.ValidateSignUp(database.DB)
 	if err != nil {
 		http.Error(w, "error while validating sign up", http.StatusInternalServerError)
 	}
@@ -117,7 +95,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 				account.User.HashPassword(salt)
 				account.UserID = account.User.GenerateUserID()
 				// add details into the user table
-				create_user_query, err := db.Exec(`INSERT INTO user (user_id, username, email, password, salt,
+				create_user_query, err := database.DB.Exec(`INSERT INTO user (user_id, username, email, password, salt,
 					forename, surname, dob, address, current_balance) VALUES 
 					(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 					account.UserID,
@@ -137,7 +115,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				// adds all security questions into security questions table
 				for i := 0; i < len(account.Security_Questions); i++ {
-					create_sq_query, err := db.Exec(`INSERT INTO security_questions
+					create_sq_query, err := database.DB.Exec(`INSERT INTO security_questions
 				(user_id, question, answer) VALUES (?, ?, ?)`, account.UserID,
 						account.Security_Questions[i].Question, account.Security_Questions[i].Answer)
 					// check if query returns errors
