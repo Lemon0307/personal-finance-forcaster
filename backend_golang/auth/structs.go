@@ -7,9 +7,10 @@ import (
 )
 
 type User struct {
-	Username        string  `json:"username"`
-	Email           string  `json:"email"`
-	Password        string  `json:"password"`
+	Username        string `json:"username"`
+	Email           string `json:"email"`
+	Password        string `json:"password"`
+	Salt            []byte
 	ConfirmPassword string  `json:"confirm_password"`
 	Forename        string  `json:"forename"`
 	Surname         string  `json:"surname"`

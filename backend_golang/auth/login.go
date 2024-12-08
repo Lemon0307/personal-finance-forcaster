@@ -10,6 +10,37 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
+// func (user *User) UserExists(db *sql.DB) (bool, error) {
+// 	rows, err := db.Query("SELECT * FROM user WHERE email = ?", user.Email)
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	defer rows.Close()
+// }
+
+func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
+	var db_hash string
+	var db_salt []byte
+	err := db.QueryRow("SELECT password, user_id, salt FROM User WHERE email = ?", account.User.Email).Scan(&db_hash, &account.UserID, &db_salt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("the email or password provided isn't correct, please try again or create a new account")
+		}
+		return false, err
+	}
+	account.User.HashPassword(db_salt)
+	if account.User.Password == db_hash {
+		return true, nil
+	}
+	return false, nil
+}
+
+func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
+	rows, err := db.Query("SELECT * FROM Security_Questions WHERE user_id = ?", account.UserID)
+	defer rows.Close()
+
+}
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	var err error
@@ -39,28 +70,29 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// login
 
-	var account *Account
+	var account Account
+	// parse json into account struct
 	err = json.NewDecoder(r.Body).Decode(&account)
 	if err != nil {
 		log.Fatal(err)
 	}
-	var res bool
-	db.QueryRow("SELECT EXISTS(SELECT * FROM user WHERE user_id = ?)", account.UserID).Scan(&res)
-	if !res {
-		http.Error(w, "Account does not exists, please try again or create an account", http.StatusNotFound)
-	}
-
-	if account.UserID == "" {
-		http.Error(w, "Invalid credentials, please try again", http.StatusUnauthorized)
-	}
-
-	token, err := account.GenerateJWT()
+	// check if user details are present in the db
+	res, err := account.ValidateUserAndPassword(db)
 	if err != nil {
-		log.Println("can't generate JWT: ", err)
-		return
+		// return error message
+		w.Header().Set("Content-Type", "application/json")
+		response := Response{
+			Message:    err.Error(),
+			StatusCode: 400,
+		}
+		// builds json response
+		err := json.NewEncoder(w).Encode(response)
+		if err != nil {
+			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+			return
+		}
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
-	fmt.Println("Generated token for user " + account.UserID)
+	if res {
+		account.ValidateSecurityQuestions(db)
+	}
 }

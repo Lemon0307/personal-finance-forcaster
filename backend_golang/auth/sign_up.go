@@ -2,12 +2,9 @@ package auth
 
 import (
 	// "fmt"
-	"crypto/rand"
-	"crypto/sha256"
+
 	"database/sql"
-	"encoding/base64"
 	"encoding/json"
-	"io"
 	"log"
 	"net/http"
 
@@ -27,6 +24,7 @@ func (user *User) GenerateUserID() string {
 
 func (user *User) ValidateSignUp(db *sql.DB) (bool, error) {
 	var res bool
+	// checks if user exists
 	query := "SELECT EXISTS(SELECT * FROM user WHERE email = ?)"
 	err := db.QueryRow(query, user.Email).Scan(&res)
 	if err != nil {
@@ -47,27 +45,6 @@ func (user User) ValidatePassword() bool {
 	}
 	// regexp.Match(rx, []byte(user.Password))
 	return res
-}
-
-func GenerateSalt(size int) ([]byte, error) {
-	salt := make([]byte, size)
-	_, err := io.ReadFull(rand.Reader, salt)
-	if err != nil {
-		return nil, err
-	}
-	return salt, nil
-}
-
-func (user *User) HashAndSaltPassword() {
-	salt, err := GenerateSalt(16)
-	if err != nil {
-		log.Fatal(err)
-	} else {
-		hash := sha256.New()
-		hash.Write(salt)
-		hash.Write([]byte(user.Password))
-		user.Password = base64.RawStdEncoding.EncodeToString(hash.Sum(nil))
-	}
 }
 
 // password handling methods
@@ -118,62 +95,79 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	// db connection
 
 	var account *Account
+	// parse json into account struct
 	err = json.NewDecoder(r.Body).Decode(&account)
 	if err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
+	// check if data provided exists in the user table
 	res, err := account.User.ValidateSignUp(db)
 	if err != nil {
 		http.Error(w, "error while validating sign up", http.StatusInternalServerError)
 	}
-	fmt.Println(res)
 	if res {
+		// check if password = confirm password
 		if account.User.ValidatePassword() {
-			account.User.HashAndSaltPassword()
-			account.UserID = account.User.GenerateUserID()
-			fmt.Println(account.UserID)
-			fmt.Println(account)
-
-			create_user_query, err := db.Exec(`INSERT INTO user (user_id, username, email, password,
-			forename, surname, dob, address, current_balance) VALUES 
-			(?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-				account.UserID, account.User.Username, account.User.Email, account.User.Password, account.User.Forename,
-				account.User.Surname, account.User.DOB.Time, account.User.Address, account.User.CurrentBalance)
+			salt, err := GenerateSalt(16)
+			account.User.Salt = salt
 			if err != nil {
-				http.Error(w, "Could not insert user data into database", http.StatusInternalServerError)
 				log.Fatal(err)
-			}
-
-			for i := 0; i < len(account.Security_Questions); i++ {
-				create_sq_query, err := db.Exec(`INSERT INTO security_questions
-				(user_id, question, answer) VALUES (?, ?, ?)`, account.UserID,
-					account.Security_Questions[i].Question, account.Security_Questions[i].Answer)
+			} else {
+				account.User.HashPassword(salt)
+				account.UserID = account.User.GenerateUserID()
+				// add details into the user table
+				create_user_query, err := db.Exec(`INSERT INTO user (user_id, username, email, password, salt,
+					forename, surname, dob, address, current_balance) VALUES 
+					(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+					account.UserID,
+					account.User.Username,
+					account.User.Email,
+					account.User.Password,
+					account.User.Salt,
+					account.User.Forename,
+					account.User.Surname,
+					account.User.DOB.Time,
+					account.User.Address,
+					account.User.CurrentBalance)
+				// check if query returns errors
 				if err != nil {
-					http.Error(w, "Could not insert sq data into database", http.StatusInternalServerError)
+					http.Error(w, "Could not insert user data into database", http.StatusInternalServerError)
 					log.Fatal(err)
 				}
-				fmt.Println("$1 rows affected in Users Table, $2 rows affected in Security Questions table", create_user_query, create_sq_query)
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			response := Response{
-				Message:    "Account created!",
-				StatusCode: 201,
-			}
-
-			err = json.NewEncoder(w).Encode(response)
-			if err != nil {
-				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
-				return
+				// adds all security questions into security questions table
+				for i := 0; i < len(account.Security_Questions); i++ {
+					create_sq_query, err := db.Exec(`INSERT INTO security_questions
+				(user_id, question, answer) VALUES (?, ?, ?)`, account.UserID,
+						account.Security_Questions[i].Question, account.Security_Questions[i].Answer)
+					// check if query returns errors
+					if err != nil {
+						http.Error(w, "Could not insert sq data into database", http.StatusInternalServerError)
+						log.Fatal(err)
+					}
+					fmt.Println("$1 rows affected in Users Table, $2 rows affected in Security Questions table", create_user_query, create_sq_query)
+				}
+				// return message
+				w.Header().Set("Content-Type", "application/json")
+				response := Response{
+					Message:    "Account created!",
+					StatusCode: 201,
+				}
+				// builds json response
+				err = json.NewEncoder(w).Encode(response)
+				if err != nil {
+					http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+					return
+				}
 			}
 		} else {
+			// return error message
 			w.Header().Set("Content-Type", "application/json")
 			response := Response{
 				Message:    "Password does not match confirm password",
 				StatusCode: 400,
 			}
-
+			// builds json response
 			err := json.NewEncoder(w).Encode(response)
 			if err != nil {
 				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
@@ -181,19 +175,19 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
+		// return error message
 		w.Header().Set("Content-Type", "application/json")
 		response := Response{
 			Message:    "A user with this email already has an account, please try again",
 			StatusCode: 400,
 		}
-
+		// builds json response
 		err := json.NewEncoder(w).Encode(response)
 		if err != nil {
 			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
 			return
 		}
 	}
-	fmt.Println(account)
 }
 
 // main sign up process
