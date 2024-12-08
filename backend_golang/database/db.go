@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS Transactions (
     year INT NOT NULL,
     date DATE NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (month, year) REFERENCES Monthly_Costs(month, year) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (user_id, month, year) REFERENCES Monthly_Costs(user_id, month, year) ON DELETE CASCADE ON UPDATE CASCADE
 );
 `
 
@@ -112,6 +112,10 @@ func InitDB() error {
 	}
 
 	fmt.Println("Connected to the database!")
+	err = CreateTable(DB)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return nil
 }
 

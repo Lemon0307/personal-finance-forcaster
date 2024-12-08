@@ -99,6 +99,7 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
+
 	var err error
 	// check if token is valid or expired
 	token := r.Header.Get("Authorization")
@@ -110,11 +111,60 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	// get user id from jwt
 	user_id := claims.UserID
 
-	// create new manage budget session
-	var manageBudget ManageBudgets
-	rows, err := database.DB.Query(`SELECT user_id, budget_name, item_name, description, budget_cost,
-				priority FROM Budget JOIN Budget_Items ON Budget.user_id = Budget_Items.user_id AND Budget.budget_name = 
-				Budget_Items.budget_name WHERE user_id = ?`, user_id)
+	// create new manage budget session (modified join to left join)
+	rows, err := database.DB.Query(`
+        SELECT budget.user_id, budget.budget_name, 
+               budget_items.item_name, budget_items.budget_cost, 
+			   budget_items.description, budget_items.priority
+        FROM Budget budget
+        LEFT JOIN Budget_Items budget_items
+        ON budget.user_id = budget_items.user_id AND budget.budget_name = budget_items.budget_name
+        WHERE budget.user_id = ?`, user_id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var budgets = make(map[string]*ManageBudgets)
+
+	for rows.Next() {
+		var user_id string
+		var budget Budget
+		var budget_item BudgetItems
+		if err := rows.Scan(&user_id, &budget.BudgetName, &budget_item.ItemName,
+			&budget_item.BudgetCost, &budget_item.Description, &budget_item.Priority); err != nil {
+			log.Fatal(err)
+		}
+
+		if _, exists := budgets[budget.BudgetName]; !exists {
+			budgets[budget.BudgetName] = &ManageBudgets{
+				UserID: user_id,
+				Budget: Budget{
+					BudgetName: budget.BudgetName,
+				},
+				BudgetItems: []BudgetItems{},
+			}
+		}
+
+		if budget_item.ItemName != "" {
+			budgets[budget.BudgetName].BudgetItems = append(budgets[budget.BudgetName].BudgetItems, BudgetItems{
+				ItemName:    budget_item.ItemName,
+				BudgetCost:  budget_item.BudgetCost,
+				Description: budget_item.Description,
+				Priority:    budget_item.Priority,
+			})
+		}
+
+		if err := rows.Err(); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	var budgets_array []ManageBudgets
+	for _, budget := range budgets {
+		budgets_array = append(budgets_array, *budget)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(budgets_array)
 }
 func (budget *BudgetHandler) RemoveBudget(w http.ResponseWriter, r *http.Request) {
 
