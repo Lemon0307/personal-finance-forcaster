@@ -99,7 +99,22 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	}
 }
 func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
+	var err error
+	// check if token is valid or expired
+	token := r.Header.Get("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+	claims, err := auth.ValidateJWT(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// get user id from jwt
+	user_id := claims.UserID
 
+	// create new manage budget session
+	var manageBudget ManageBudgets
+	rows, err := database.DB.Query(`SELECT user_id, budget_name, item_name, description, budget_cost,
+				priority FROM Budget JOIN Budget_Items ON Budget.user_id = Budget_Items.user_id AND Budget.budget_name = 
+				Budget_Items.budget_name WHERE user_id = ?`, user_id)
 }
 func (budget *BudgetHandler) RemoveBudget(w http.ResponseWriter, r *http.Request) {
 
