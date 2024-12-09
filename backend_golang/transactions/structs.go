@@ -19,6 +19,8 @@ type Transactions struct {
 	Year            int
 }
 
+type TransactionHandler struct {}
+
 type MonthlyCosts struct {
 	BudgetID string
 	Month    int

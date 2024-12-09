@@ -13,21 +13,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func (budget *Budget) ValidateBudget(db *sql.DB, user_id string) (bool, error) {
-	var res bool
-	err := db.QueryRow("SELECT EXISTS(SELECT * FROM Budget WHERE budget_name = ? AND user_id = ?)", budget.BudgetName, user_id).Scan(&res)
-	if err != nil {
-		return false, err
-	}
-	return !res, nil
-}
-
+// check if a budget with budget_name and user_id exists in the db
 func BudgetExists(db *sql.DB, user_id string, budget_name string) bool {
 	var res bool
-	_ = db.QueryRow("SELECT * FROM Budgets WHERE budget_name = ? AND user_id = ?", budget_name, user_id).Scan(&res)
+	_ = db.QueryRow("SELECT EXISTS(SELECT * FROM Budgets WHERE budget_name = ? AND user_id = ?)", budget_name, user_id).Scan(&res)
 	return res
 }
 
+// check if an itme with item_name and user_id exists in the db
 func ItemExists(db *sql.DB, user_id string, item_name string) bool {
 	var res bool
 	_ = db.QueryRow("SELECT * FROM Budget_Items WHERE item_name = ? AND user_id = ?", item_name, user_id).Scan(&res)
@@ -57,11 +50,8 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if budget exists in the database
-	budget_ok, err := manageBudget.Budget.ValidateBudget(database.DB, user_id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if budget_ok {
+	budget_exists := BudgetExists(database.DB, manageBudget.Budget.BudgetName, user_id)
+	if !budget_exists {
 		// add budget
 		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
 			user_id, manageBudget.Budget.BudgetName)
@@ -320,10 +310,12 @@ func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Re
 	var budget_item BudgetItems
 	_ = json.NewDecoder(r.Body).Decode(&budget_item)
 
+	// building query string
 	query := "UPDATE Budget_Items SET"
 	args := []interface{}{}
 	columns := []string{}
 
+	// check if conditions exist
 	if budget_item.BudgetCost != 0 {
 		columns = append(columns, "budget_cost = ?")
 		args = append(args, budget_item.BudgetCost)
@@ -338,6 +330,7 @@ func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Re
 	}
 
 	if len(columns) > 0 {
+		// complete query string
 		query += " " + strings.Join(columns, ", ")
 		query += " WHERE user_id = ? AND budget_name = ? AND item_name = ?"
 
@@ -348,25 +341,29 @@ func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Re
 			log.Fatal(err)
 		}
 
+		// return success message
 		response := Response{
 			Message:    "Successfully updated budget item",
 			StatusCode: 201,
 		}
-
+		// build json response
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	} else {
+		// return error message
 		response := ErrorMessage{
 			Message:    "There are no updates to the budget item",
 			StatusCode: 401,
 		}
 
+		// build json response
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 	}
 
 }
 
+// routing
 func BudgetRoutes(router *mux.Router, budgetService BudgetService) {
 	router.HandleFunc("/budgets", budgetService.GetBudget).Methods("GET")
 	router.HandleFunc("/budgets/add_budget", budgetService.AddBudget).Methods("POST")
