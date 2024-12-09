@@ -51,6 +51,7 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 
 	// check if budget exists in the database
 	budget_exists := BudgetExists(database.DB, manageBudget.Budget.BudgetName, user_id)
+	fmt.Println(budget_exists)
 	if !budget_exists {
 		// add budget
 		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
@@ -60,16 +61,35 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 		}
 		// add all budget items
 		for i := 0; i < len(manageBudget.BudgetItems); i++ {
-			_, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
-			 item_name, description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
-				user_id,
-				manageBudget.Budget.BudgetName,
-				manageBudget.BudgetItems[i].ItemName,
-				manageBudget.BudgetItems[i].Description,
-				manageBudget.BudgetItems[i].BudgetCost,
-				manageBudget.BudgetItems[i].Priority)
+			// check if budget item exists
+			var budget_item_exists bool
+			err = database.DB.QueryRow(`SELECT EXISTS(SELECT * FROM Budget_Items WHERE item_name = ? 
+			AND user_id = ? AND budget_name = ?)`, manageBudget.BudgetItems[i].ItemName, user_id,
+				manageBudget.Budget.BudgetName).Scan(&budget_item_exists)
+
 			if err != nil {
 				log.Fatal(err)
+			}
+
+			if !budget_item_exists {
+				_, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
+				item_name, description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
+					user_id,
+					manageBudget.Budget.BudgetName,
+					manageBudget.BudgetItems[i].ItemName,
+					manageBudget.BudgetItems[i].Description,
+					manageBudget.BudgetItems[i].BudgetCost,
+					manageBudget.BudgetItems[i].Priority)
+				if err != nil {
+					log.Fatal(err)
+				}
+			} else {
+				response := ErrorMessage{
+					Message: `Budget item with name ` + manageBudget.BudgetItems[i].ItemName +
+						`already exists`,
+				}
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(response)
 			}
 		}
 		// return success message

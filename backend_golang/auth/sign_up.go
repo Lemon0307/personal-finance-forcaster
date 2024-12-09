@@ -18,7 +18,7 @@ import (
 
 // user methods
 
-func (user *User) GenerateUserID() string {
+func GenerateUserID() string {
 	res := uuid.New()
 	return res.String()
 }
@@ -93,7 +93,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			} else {
 				account.User.HashPassword(salt)
-				account.UserID = account.User.GenerateUserID()
+				account.UserID = GenerateUserID()
 				// add details into the user table
 				create_user_query, err := database.DB.Exec(`INSERT INTO user (user_id, username, email, password, salt,
 					forename, surname, dob, address, current_balance) VALUES 

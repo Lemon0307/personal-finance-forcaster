@@ -59,11 +59,10 @@ CREATE TABLE IF NOT EXISTS Monthly_Costs (
     month INT NOT NULL,
     year INT NOT NULL,
     item_name VARCHAR(100) NOT NULL,
-    cost DECIMAL(10, 2) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (item_name) REFERENCES Budget_Items(item_name) ON DELETE CASCADE ON UPDATE CASCADE,
     PRIMARY KEY (user_id, month, year),
-    INDEX idx_month_year (month, year)
+    INDEX idx_month_year (month, year, user_id)
 );
 
 -- Table: Transactions
