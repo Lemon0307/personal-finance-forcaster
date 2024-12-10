@@ -2,12 +2,13 @@ package transactions
 
 import "time"
 
-// type BudgetItem struct {
-// 	ItemName    string  `json:"item_name"`
-// 	BudgetCost  float32 `json:"budget_cost"`
-// 	Description string  `json:"description"`
-// 	Priority    float32 `json:"priority"`
-// }
+type BudgetItem struct {
+	BudgetName string `json:"budget_name"`
+	ItemName   string `json:"item_name"`
+	// BudgetCost  float32 `json:"budget_cost"`
+	// Description string  `json:"description"`
+	// Priority    float32 `json:"priority"`
+}
 
 type Transactions struct {
 	TransactionID   string  `json:"transaction_id"`
@@ -25,7 +26,7 @@ type MonthlyCosts struct {
 }
 
 type ManageTransactions struct {
-	ItemName     string         `json:"item_name"`
+	BudgetItem   BudgetItem     `json:"budget_item"`
 	Transactions []Transactions `json:"transactions"`
 	MonthlyCosts MonthlyCosts   `json:"monthly_costs"`
 }

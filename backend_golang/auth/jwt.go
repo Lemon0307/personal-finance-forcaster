@@ -31,7 +31,6 @@ func (account *Account) GenerateJWT() (string, error) {
 }
 
 func ValidateJWT(token_string string) (*Claims, error) {
-	fmt.Println(token_string)
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(token_string, claims,
 		func(token *jwt.Token) (interface{}, error) {
