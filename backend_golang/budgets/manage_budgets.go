@@ -72,6 +72,7 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 			AND user_id = ? AND budget_name = ?)`, manageBudget.BudgetItems[i].ItemName, user_id,
 				manageBudget.Budget.BudgetName).Scan(&budget_item_exists)
 
+			fmt.Println(budget_item_exists)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -318,6 +319,7 @@ func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
+	fmt.Println(manageBudget.Budget.BudgetName)
 	update_budget, err := database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
 	budget_name = ? AND user_id = ?`, manageBudget.Budget.BudgetName, budget_name, user_id)
 	fmt.Println("$1 Rows affected", update_budget)

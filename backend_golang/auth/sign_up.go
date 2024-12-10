@@ -79,6 +79,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
+	fmt.Println(account)
 	// check if data provided exists in the user table
 	res, err := account.User.ValidateSignUp(database.DB)
 	if err != nil {
