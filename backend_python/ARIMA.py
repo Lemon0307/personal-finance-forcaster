@@ -1,57 +1,61 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
-def forecast_arima(data, phi_1, theta_1, months):
-    predicted_values = []
-    residuals = np.zeros(len(data))
+def forecast(data, months):
+    data = np.array(data)
     
-    for t in range(1, len(data)):
-        predicted_ar = phi_1 * data[t-1]
-        predicted_ma = theta_1 * residuals[t-1]
-        predicted_value = predicted_ar + predicted_ma
-        predicted_values.append(predicted_value)
-        residuals[t] = data[t] - predicted_value
+    # calculates the n-th discrete difference along the given axis.
+    difference = np.diff(data)
 
-    forecasted_values = []
-    last_value = data[-1]
-    last_residual = residuals[-1]
-    
-    for _ in range(months):
-        forecast_ar = phi_1 * last_value
-        forecast_ma = theta_1 * last_residual
-        forecast_value = forecast_ar + forecast_ma
-        
-        forecasted_values.append(forecast_value)
-        
-        last_value = forecast_value + last_value
-        last_residual = forecast_value - forecast_ar
-    
-    return np.array(predicted_values), np.array(forecasted_values)
+    #finds a suitable value for phi
+    a = estimate_first_ar(difference)
 
-def estimate_ar1(data):
+    #finds a suitable value for theta
+    b = estimate_first_ma(difference, a)
+
+    # the main ARIMA model
+    forecast = ARIMA(difference, a, b, months)
+
+    # returns the last value of data and forecast as an array
+    return forecast + data[-1]
+
+def ARIMA(data, a, b, months):
+    
+    prediction = np.zeros(len(data))
+
+    forecast = np.zeros(months)
+
+    error = np.zeros(len(data))
+
+
+    for i in range(1, len(data)):
+        # linear combination of phi and theta with each data and its error
+        prediction[i] = np.dot([a, b], [data[i-1], error[i-1]])
+        error[i] = data[i] - prediction[i]
+
+    last = data[-1]
+    last_error = error[-1]
+
+    for i in range(months):
+        forecast[i] = np.dot([a, b], [last, last_error])
+        last += forecast[i]
+        last_error = forecast[i] - a*last
+
+    return np.array(forecast)
+
+def estimate_first_ar(data):
     lag_1 = data[:-1]
     y_t = data[1:]
     phi = np.corrcoef(lag_1, y_t)[0, 1]
     return phi
 
-def estimate_ma1(data, phi_1):
-    predicted_ar = np.roll(data, 1) * phi_1
-    residuals = data - predicted_ar
-    residuals = residuals[1:]
+def estimate_first_ma(data, a):
+    predicted_ar = np.roll(data, 1) * a
+    error = data - predicted_ar
+    error = error[1:]
     
-    theta_1 = np.corrcoef(residuals[:-1], residuals[1:])[0, 1]
+    theta_1 = np.corrcoef(error[:-1], error[1:])[0, 1]
     return theta_1
 
-def forecast_data(x, months):
-    data = np.array(x)
-    n = len(data)
+stuff = [10, 20, 20, 10, 30, 20, 30, 20, 22, 30, 23, 26, 15, 16]
 
-    differenced_data = np.diff(data)
-
-    phi_1 = estimate_ar1(differenced_data)
-    theta_1 = estimate_ma1(differenced_data, phi_1)
-    predicted_values, forecasted_values = forecast_arima(differenced_data, phi_1, theta_1, months)
-    forecasted_data = forecasted_values + data[-1]
-
-    return forecasted_data
-
+print(forecast(stuff, 10))

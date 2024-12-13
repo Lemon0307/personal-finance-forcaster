@@ -31,34 +31,32 @@ const SignUp = () => {
     "What city were you born in?",
   ];
 
-  // Handle user info changes
   const handleDetailsChange = (e) => {
     const { name, value } = e.target;
     setDetails({ ...details, [name]: value });
   };
 
-  // Handle security questions changes
   const handleSecurityQuestionChange = (index, field, value) => {
     const updatedQuestions = [...securityQuestions];
     updatedQuestions[index][field] = value;
     setSecurityQuestions(updatedQuestions);
   };
 
-  // Add another security question
   const addSecurityQuestion = () => {
     setSecurityQuestions([...securityQuestions, { question: "", answer: "" }]);
   };
 
-  // Submit the form
   console.log(details)
+
   const handleSubmit = async () => {
     try {
       const userData = {
-        ...details,
+        user: {...details, current_balance: parseFloat(details.current_balance)},
         security_questions: securityQuestions,
       };
+      console.log(userData)
     const response = await axios.post("http://localhost:8080/sign_up", userData)
-    alert(response.data)
+    alert(response.data.Message)
     } catch (error) {
         alert(error)
     }
@@ -88,6 +86,13 @@ const SignUp = () => {
             name="password"
             placeholder="Password"
             value={details.password}
+            onChange={handleDetailsChange}
+          />
+          <input
+            type="password"
+            name="confirm_password"
+            placeholder="Confirm Password"
+            value={details.confirm_password}
             onChange={handleDetailsChange}
           />
           <input

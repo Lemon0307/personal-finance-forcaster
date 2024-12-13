@@ -22,6 +22,7 @@ func main() {
 	transactions.TransactionRoutes(router, &transactions.TransactionHandler{})
 	router.HandleFunc("/sign_up", auth.SignUpHandler).Methods("POST")
 	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
+	router.HandleFunc("/get_questions", auth.SQHandler).Methods("GET")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:3000"},

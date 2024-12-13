@@ -75,16 +75,17 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	var account *Account
 	// parse json into account struct
 	err = json.NewDecoder(r.Body).Decode(&account)
+	fmt.Println(account)
 	if err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
-	fmt.Println(account)
 	// check if data provided exists in the user table
 	res, err := account.User.ValidateSignUp(database.DB)
 	if err != nil {
 		http.Error(w, "error while validating sign up", http.StatusInternalServerError)
 	}
+
 	if res {
 		// check if password = confirm password
 		if account.User.ValidatePassword() {
