@@ -81,7 +81,12 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 	user_id := claims.UserID
 
 	var manageTransactions ManageTransactions
-	json.NewDecoder(r.Body).Decode(&manageTransactions)
+	err = json.NewDecoder(r.Body).Decode(&manageTransactions)
+	if err != nil {
+		fmt.Print(err.Error())
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
 
 	month := MonthToInt(manageTransactions.Transactions[0].Date.Month().String())
 	year := manageTransactions.Transactions[0].Date.Year()

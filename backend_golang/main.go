@@ -5,6 +5,7 @@ import (
 	"golang/auth"
 	"golang/budgets"
 	"golang/database"
+	"golang/forecast"
 	"golang/transactions"
 	"net/http"
 
@@ -20,6 +21,7 @@ func main() {
 	router := mux.NewRouter()
 	budgets.BudgetRoutes(router, &budgets.BudgetHandler{})
 	transactions.TransactionRoutes(router, &transactions.TransactionHandler{})
+	forecast.ForecastRoutes(router, &forecast.ForecastHandler{})
 	router.HandleFunc("/sign_up", auth.SignUpHandler).Methods("POST")
 	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
 	router.HandleFunc("/get_questions", auth.SQHandler).Methods("GET")

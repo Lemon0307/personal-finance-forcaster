@@ -55,7 +55,3 @@ def estimate_first_ma(data, a):
     
     theta_1 = np.corrcoef(error[:-1], error[1:])[0, 1]
     return theta_1
-
-stuff = [10, 20, 20, 10, 30, 20, 30, 20, 22, 30, 23, 26, 15, 16]
-
-print(forecast(stuff, 10))
