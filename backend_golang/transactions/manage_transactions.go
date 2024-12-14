@@ -285,14 +285,8 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 		json.NewEncoder(w).Encode(response)
 	} else {
 		// return error message
-		response := ErrorMessage{
-			Message: "transaction with id" + transaction_id + " and in budget item" +
-				"item_name" + "doesn't exist, please try again",
-			StatusCode: 201,
-		}
-		// return json response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		http.Error(w, "transaction with id"+transaction_id+" and in budget item"+
+			"item_name"+"doesn't exist, please try again", http.StatusNotFound)
 	}
 }
 

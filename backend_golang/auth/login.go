@@ -80,17 +80,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	user_password_ok, err := account.ValidateUserAndPassword(database.DB)
 	if err != nil {
 		// return error message
-		w.Header().Set("Content-Type", "application/json")
-		response := ErrorMessage{
-			Message:    err.Error(),
-			StatusCode: 400,
-		}
-		// builds json response
-		err := json.NewEncoder(w).Encode(response)
-		if err != nil {
-			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, err.Error(), http.StatusNotFound)
 	}
 	if user_password_ok {
 		// checks if security questions match

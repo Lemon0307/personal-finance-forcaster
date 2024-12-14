@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"golang/auth"
+	"golang/budgets"
 	"golang/database"
 	"io"
 	"log"
@@ -70,34 +71,39 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 	item_name := vars["item_name"]
 	months := vars["months"]
 
-	res := GetTransactions(database.DB, user_id, item_name)
+	if !budgets.ItemExists(database.DB, user_id, item_name) {
+		http.Error(w, "Budget item does not exist, please try again", http.StatusNotFound)
+	} else {
+		res := GetTransactions(database.DB, user_id, item_name)
 
-	resString, err := json.Marshal(res)
-	if err != nil {
-		log.Fatal(err)
+		resString, err := json.Marshal(res)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		req, err := http.NewRequest("POST", "http://localhost:5000/forecast?months="+months, bytes.NewBuffer([]byte(resString)))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{}
+		response, err := client.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(response.StatusCode)
+		w.Write(body)
 	}
 
-	req, err := http.NewRequest("POST", "http://localhost:5000/forecast?months="+months, bytes.NewBuffer([]byte(resString)))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer response.Body.Close()
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response.StatusCode)
-	w.Write(body)
 }
 
 func (forecast *ForecastHandler) RecommendBudget(w http.ResponseWriter, r *http.Request) {
@@ -119,36 +125,41 @@ func (forecast *ForecastHandler) RecommendBudget(w http.ResponseWriter, r *http.
 	var vars = mux.Vars(r)
 	item_name := vars["item_name"]
 
-	res := GetTransactions(database.DB, user_id, item_name)
+	if !budgets.ItemExists(database.DB, user_id, item_name) {
+		http.Error(w, "Budget item does not exist, please try again", http.StatusNotFound)
+	} else {
+		res := GetTransactions(database.DB, user_id, item_name)
 
-	resString, err := json.Marshal(res)
-	if err != nil {
-		log.Fatal(err)
+		resString, err := json.Marshal(res)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		req, err := http.NewRequest("POST", "http://localhost:5000/recommend_budget", bytes.NewBuffer([]byte(resString)))
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+		client := &http.Client{}
+		response, err := client.Do(req)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer response.Body.Close()
+
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(response.StatusCode)
+		w.Write(body)
 	}
-
-	req, err := http.NewRequest("POST", "http://localhost:5000/recommend_budget", bytes.NewBuffer([]byte(resString)))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{}
-	response, err := client.Do(req)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer response.Body.Close()
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(response.StatusCode)
-	w.Write(body)
 }
 
 func ForecastRoutes(router *mux.Router, forecastService ForecastService) {
 	router.HandleFunc("/forecast/forecast_transactions/{months}/{item_name}", forecastService.ForecastTransactions).Methods("POST")
+	router.HandleFunc("/forecast/recommend_budget/{item_name}", forecastService.RecommendBudget).Methods("POST")
 }

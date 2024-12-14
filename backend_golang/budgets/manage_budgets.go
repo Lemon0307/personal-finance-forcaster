@@ -20,7 +20,7 @@ func BudgetExists(db *sql.DB, user_id string, budget_name string) bool {
 	return res
 }
 
-// check if an itme with item_name and user_id exists in the db
+// check if an item with item_name and user_id exists in the db
 func ItemExists(db *sql.DB, user_id string, item_name string) bool {
 	var res bool
 	_ = db.QueryRow("SELECT EXISTS(SELECT * FROM Budget_Items WHERE item_name = ? AND user_id = ?)",
@@ -90,12 +90,8 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 					log.Fatal(err)
 				}
 			} else {
-				response := ErrorMessage{
-					Message: `Budget item with name ` + manageBudget.BudgetItems[i].ItemName +
-						`already exists`,
-				}
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(response)
+				http.Error(w, `Budget item with name `+manageBudget.BudgetItems[i].ItemName+
+					`already exists`, http.StatusConflict)
 			}
 		}
 		// return success message
@@ -112,17 +108,7 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		// return error message
-		w.Header().Set("Content-Type", "application/json")
-		response := ErrorMessage{
-			Message:    "A budget with this name already exists.",
-			StatusCode: 400,
-		}
-		// builds json response
-		err := json.NewEncoder(w).Encode(response)
-		if err != nil {
-			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, "A budget with this name already exists.", http.StatusConflict)
 	}
 }
 
@@ -238,13 +224,7 @@ func (budget *BudgetHandler) RemoveBudget(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(response)
 	} else {
 		// return error message
-		response := ErrorMessage{
-			Message:    "Cannot delete budget because budget does not exist",
-			StatusCode: 401,
-		}
-		// make json response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		http.Error(w, "Cannot delete budget because budget does not exist", http.StatusNotFound)
 	}
 }
 
@@ -286,12 +266,7 @@ func (budget *BudgetHandler) RemoveBudgetItems(w http.ResponseWriter, r *http.Re
 		json.NewEncoder(w).Encode(response)
 	} else {
 		// return error message
-		response := ErrorMessage{
-			Message: "Cannot delete budget item because budget item does not exist",
-		}
-		// make json response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		http.Error(w, "Cannot delete budget item because budget item does not exist", http.StatusNotFound)
 	}
 }
 func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request) {
@@ -400,14 +375,7 @@ func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Re
 		json.NewEncoder(w).Encode(response)
 	} else {
 		// return error message
-		response := ErrorMessage{
-			Message:    "There are no updates to the budget item",
-			StatusCode: 401,
-		}
-
-		// build json response
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
+		http.Error(w, "There are no updates to the budget item", http.StatusNotModified)
 	}
 
 }

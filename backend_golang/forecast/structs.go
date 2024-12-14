@@ -7,7 +7,3 @@ type TotalTransactions struct {
 	Year        int
 	TotalAmount float64
 }
-
-type Response struct {
-	ForecastedTransactions []float64
-}

@@ -143,30 +143,12 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			// return error message
 			w.Header().Set("Content-Type", "application/json")
-			response := ErrorMessage{
-				Message:    "Password does not match confirm password",
-				StatusCode: 400,
-			}
-			// builds json response
-			err := json.NewEncoder(w).Encode(response)
-			if err != nil {
-				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
-				return
-			}
+			http.Error(w, "Password does not match confirm password", http.StatusUnauthorized)
 		}
 	} else {
 		// return error message
 		w.Header().Set("Content-Type", "application/json")
-		response := ErrorMessage{
-			Message:    "A user with this email already has an account, please try again",
-			StatusCode: 400,
-		}
-		// builds json response
-		err := json.NewEncoder(w).Encode(response)
-		if err != nil {
-			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, "A user with this email already has an account, please try again", http.StatusConflict)
 	}
 }
 

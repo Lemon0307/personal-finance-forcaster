@@ -35,11 +35,6 @@ type Date struct {
 	time.Time
 }
 
-type ErrorMessage struct {
-	Message    string
-	StatusCode int
-}
-
 type Response struct {
 	Message    string
 	StatusCode int
