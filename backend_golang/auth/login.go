@@ -21,11 +21,13 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 	var db_hash string
 	var db_salt []byte
 	// check if user exists in db
-	err := db.QueryRow("SELECT password, user_id, salt FROM User WHERE email = ?", account.User.Email).
+	err := db.QueryRow("SELECT password, user_id, salt FROM User WHERE email = ?",
+		account.User.Email).
 		Scan(&db_hash, &account.UserID, &db_salt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, fmt.Errorf("the email or password provided isn't correct, please try again or create a new account")
+			return false, fmt.Errorf(`the email or password provided isn't 
+			correct, please try again or create a new account`)
 		}
 		return false, err
 	}
@@ -39,7 +41,8 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 
 func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
 	// queries all security questions by the user in db
-	rows, err := db.Query("SELECT question, answer FROM Security_Questions WHERE user_id = ?", account.UserID)
+	rows, err := db.Query(`SELECT question, answer FROM Security_Questions 
+	WHERE user_id = ?`, account.UserID)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +104,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 			// builds json response
 			err = json.NewEncoder(w).Encode(response)
 			if err != nil {
-				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+				http.Error(w, "JSON response could not be encoded",
+					http.StatusInternalServerError)
 				return
 			}
 		}

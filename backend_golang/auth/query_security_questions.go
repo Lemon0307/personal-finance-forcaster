@@ -20,11 +20,13 @@ func SQHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Print(details)
 	var user_id string
 
-	err = database.DB.QueryRow("SELECT user_id FROM User WHERE email = ?", details.Email).Scan(&user_id)
+	err = database.DB.QueryRow("SELECT user_id FROM User WHERE email = ?",
+		details.Email).Scan(&user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
-	rows, err := database.DB.Query("SELECT question FROM Security_Questions WHERE user_id = ?", user_id)
+	rows, err := database.DB.Query(`SELECT question FROM Security_Questions 
+	WHERE user_id = ?`, user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
