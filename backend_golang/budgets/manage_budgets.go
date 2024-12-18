@@ -16,7 +16,15 @@ import (
 // check if a budget with budget_name and user_id exists in the db
 func BudgetExists(db *sql.DB, user_id string, budget_name string) bool {
 	var res bool
+	fmt.Println(budget_name)
 	_ = db.QueryRow("SELECT EXISTS(SELECT * FROM Budget WHERE budget_name = ? AND user_id = ?)", budget_name, user_id).Scan(&res)
+	return res
+}
+
+// check if a budget item with item_name and user_id exists in the db
+func BudgetItemExists(db *sql.DB, user_id string, item_name string) bool {
+	var res bool
+	_ = db.QueryRow("SELECT EXISTS(SELECT * FROM Budget_Items WHERE item_name = ? AND user_id = ?)", item_name, user_id).Scan(&res)
 	return res
 }
 
@@ -57,6 +65,7 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 
 	// check if budget exists in the database
 	budget_exists := BudgetExists(database.DB, user_id, manageBudget.Budget.BudgetName)
+	fmt.Println(budget_exists)
 	if !budget_exists {
 		// add budget
 		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
@@ -109,6 +118,68 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	} else {
 		// return error message
 		http.Error(w, "A budget with this name already exists.", http.StatusConflict)
+	}
+}
+
+func (budget *BudgetHandler) AddBudgetItem(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	// check if token is valid or expired
+	token := r.Header.Get("Authorization")
+	token = strings.TrimPrefix(token, "Bearer ")
+	claims, err := auth.ValidateJWT(token)
+	if err != nil {
+		if err.Error() == "token has expired" {
+			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
+			return
+		}
+		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+		return
+	}
+	// get user id from jwt
+	user_id := claims.UserID
+	budget_name := vars["budget_name"]
+
+	// create a new add budget item session
+	var addBudgetItem BudgetItems
+
+	// parse json into structs
+	err = json.NewDecoder(r.Body).Decode(&addBudgetItem)
+	if err != nil {
+		fmt.Print(err.Error())
+		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		return
+	}
+
+	// check if item already exists in the database
+	if !ItemExists(database.DB, user_id, addBudgetItem.ItemName) {
+		// add budget item to the database
+		_, err = database.DB.Exec(`INSERT INTO Budget_Items (item_name, budget_name, user_id, 
+		description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
+			addBudgetItem.ItemName,
+			budget_name,
+			user_id,
+			addBudgetItem.Description,
+			addBudgetItem.BudgetCost,
+			addBudgetItem.Priority)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// return success message
+		w.Header().Set("Content-Type", "application/json")
+		response := Response{
+			Message:    "Successfully added budget item",
+			StatusCode: 201,
+		}
+		// builds json response
+		err = json.NewEncoder(w).Encode(response)
+		if err != nil {
+			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		// return error message
+		http.Error(w, "A budget item with this name already exists.", http.StatusConflict)
 	}
 }
 
@@ -295,6 +366,7 @@ func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request
 		return
 	}
 	fmt.Println(manageBudget.Budget.BudgetName)
+	// sql query to update budget in the database
 	update_budget, err := database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
 	budget_name = ? AND user_id = ?`, manageBudget.Budget.BudgetName, budget_name, user_id)
 	fmt.Println("$1 Rows affected", update_budget)
@@ -302,11 +374,12 @@ func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request
 		log.Fatal(err)
 	}
 
+	// success message
 	response := Response{
 		Message:    "Successfully updated budget",
 		StatusCode: 201,
 	}
-
+	// encode to a json response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
@@ -384,6 +457,7 @@ func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Re
 func BudgetRoutes(router *mux.Router, budgetService BudgetService) {
 	router.HandleFunc("/budgets", budgetService.GetBudget).Methods("GET")
 	router.HandleFunc("/budgets/add_budget", budgetService.AddBudget).Methods("POST")
+	router.HandleFunc("/budgets/add_budget_item/{budget_name}", budgetService.AddBudgetItem).Methods("POST")
 	router.HandleFunc("/budgets/update_budget/{budget_name}", budgetService.UpdateBudget).Methods("PUT")
 	router.HandleFunc("/budgets/update_budget_item/{budget_name}/{item_name}", budgetService.UpdateBudgetItems).Methods("PUT")
 	router.HandleFunc("/budgets/remove_budget/{budget_name}", budgetService.RemoveBudget).Methods("DELETE")

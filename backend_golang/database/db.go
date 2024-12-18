@@ -36,21 +36,22 @@ CREATE TABLE IF NOT EXISTS Security_Questions (
 
 -- Table: Budget
 CREATE TABLE IF NOT EXISTS Budget (
-    budget_name VARCHAR(100) PRIMARY KEY,
+    budget_name VARCHAR(100) NOT NULL,
     user_id CHAR(36) NOT NULL,
+    PRIMARY KEY (budget_name, user_id),
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Table: Budget Items
 CREATE TABLE IF NOT EXISTS Budget_Items (
-    item_name VARCHAR(100) PRIMARY KEY,
+    item_name VARCHAR(100),
     budget_name VARCHAR(100) NOT NULL, 
     user_id CHAR(36) NOT NULL,
     description TEXT,
     budget_cost DECIMAL(10, 2) NOT NULL,
     priority INT NOT NULL,
-    FOREIGN KEY (budget_name) REFERENCES Budget(budget_name) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE CASCADE
+    PRIMARY KEY (item_name, budget_name, user_id),
+    FOREIGN KEY (budget_name, user_id) REFERENCES Budget(budget_name, user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- Table: Monthly Costs
@@ -59,9 +60,10 @@ CREATE TABLE IF NOT EXISTS Monthly_Costs (
     month INT NOT NULL,
     year INT NOT NULL,
     item_name VARCHAR(100) NOT NULL,
+    budget_name VARCHAR(100) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (item_name) REFERENCES Budget_Items(item_name) ON DELETE CASCADE ON UPDATE CASCADE,
-    PRIMARY KEY (user_id, month, year),
+    FOREIGN KEY (item_name, budget_name, user_id) REFERENCES Budget_Items(item_name, budget_name, user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    PRIMARY KEY (user_id, month, year, item_name, budget_name),
     INDEX idx_month_year (month, year, user_id)
 );
 
@@ -75,8 +77,11 @@ CREATE TABLE IF NOT EXISTS Transactions (
     month INT NOT NULL,
     year INT NOT NULL,
     date DATE NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    budget_name VARCHAR(100) NOT NULL,
     FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (user_id, month, year) REFERENCES Monthly_Costs(user_id, month, year) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY (user_id, month, year, item_name, budget_name) REFERENCES Monthly_Costs(user_id, month, year, item_name, budget_name) 
+    ON DELETE CASCADE ON UPDATE CASCADE
 );
 `
 
