@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -35,7 +36,7 @@ func (account *Account) GenerateJWT() (string, error) {
 
 func ValidateJWT(token_string string) (*Claims, error) {
 	claims := &Claims{}
-	// decrypt jwt to
+	// decode jwt to get user_id
 	token, err := jwt.ParseWithClaims(token_string, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -46,6 +47,7 @@ func ValidateJWT(token_string string) (*Claims, error) {
 
 	if err != nil {
 		fmt.Println("Error parsing token:", err)
+		// check if token has expired
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, fmt.Errorf("token has expired")
 		}
@@ -61,8 +63,9 @@ func ValidateJWT(token_string string) (*Claims, error) {
 
 type ctxkey string
 
-const userIDkey ctxkey = "userID"
+const UserIDkey ctxkey = "user_id"
 
+// runs this code every request
 func JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		tokenString := r.Header.Get("Authorization")
@@ -71,13 +74,13 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		claims, err := ValidateJWT(tokenString)
+		claims, err := ValidateJWT(strings.TrimPrefix(tokenString, "Bearer "))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userIDkey, claims.UserID)
+		ctx := context.WithValue(r.Context(), UserIDkey, claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

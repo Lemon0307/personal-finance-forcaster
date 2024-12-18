@@ -10,7 +10,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -52,21 +51,14 @@ func GetTransactions(db *sql.DB, user_id, item_name string) []TotalTransactions 
 }
 
 func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *http.Request) {
-	var err error
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
+
 	var vars = mux.Vars(r)
 	item_name := vars["item_name"]
 	months := vars["months"]
@@ -107,21 +99,14 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 }
 
 func (forecast *ForecastHandler) RecommendBudget(w http.ResponseWriter, r *http.Request) {
-	var err error
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
+
 	var vars = mux.Vars(r)
 	item_name := vars["item_name"]
 

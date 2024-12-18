@@ -19,10 +19,15 @@ func main() {
 	defer database.CloseDB()
 
 	router := mux.NewRouter()
-	budgets.BudgetRoutes(router, &budgets.BudgetHandler{})
-	transactions.TransactionRoutes(router, &transactions.TransactionHandler{})
-	forecast.ForecastRoutes(router, &forecast.ForecastHandler{})
+	mainRouter := router.PathPrefix("/main").Subrouter()
+
 	auth.AuthenticationRoutes(router, &auth.AuthenticationHandler{})
+
+	mainRouter.Use(auth.JWTAuthMiddleware)
+
+	budgets.BudgetRoutes(mainRouter, &budgets.BudgetHandler{})
+	transactions.TransactionRoutes(mainRouter, &transactions.TransactionHandler{})
+	forecast.ForecastRoutes(mainRouter, &forecast.ForecastHandler{})
 	router.HandleFunc("/get_questions", auth.SQHandler).Methods("GET")
 
 	c := cors.New(cors.Options{

@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -64,21 +63,12 @@ func TransactionExists(db *sql.DB, transaction_id string, user_id string) bool {
 
 func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *http.Request) {
 	var err error
-	// vars := mux.Vars(r)
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	var manageTransactions ManageTransactions
 	err = json.NewDecoder(r.Body).Decode(&manageTransactions)
@@ -159,20 +149,12 @@ func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r 
 	year, _ := strconv.Atoi(vars["year"])
 	month, _ := strconv.Atoi(vars["month"])
 
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	var results ManageTransactions
 
@@ -246,20 +228,13 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 	month := vars["month"]
 	item_name := vars["item_name"]
 	transaction_id := vars["transaction_id"]
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	// check if transaction exists in the db
 	transaction_exists := TransactionExists(database.DB, transaction_id, user_id)

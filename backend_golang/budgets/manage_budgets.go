@@ -38,20 +38,12 @@ func ItemExists(db *sql.DB, user_id string, item_name string) bool {
 
 func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	var err error
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	// create new manage budget session
 	var manageBudget ManageBudgets
@@ -124,20 +116,12 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 func (budget *BudgetHandler) AddBudgetItem(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 	budget_name := vars["budget_name"]
 
 	// create a new add budget item session
@@ -185,20 +169,12 @@ func (budget *BudgetHandler) AddBudgetItem(w http.ResponseWriter, r *http.Reques
 
 func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	var err error
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	// query all budgets and its budget items (modified join to left join)
 	rows, err := database.DB.Query(`
@@ -263,25 +239,17 @@ func (budget *BudgetHandler) RemoveBudget(w http.ResponseWriter, r *http.Request
 	var err error
 	vars := mux.Vars(r)
 	budget_name := vars["budget_name"]
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	// check if budget exists
 	if BudgetExists(database.DB, user_id, budget_name) {
 		// delete budget from db
-		_, err := database.DB.Exec(`DELETE FROM Budget WHERE user_id = ? AND budget_name = ?`, user_id, budget_name)
+		_, err = database.DB.Exec(`DELETE FROM Budget WHERE user_id = ? AND budget_name = ?`, user_id, budget_name)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -304,25 +272,17 @@ func (budget *BudgetHandler) RemoveBudgetItems(w http.ResponseWriter, r *http.Re
 	vars := mux.Vars(r)
 	budget_name := vars["budget_name"]
 	item_name := vars["item_name"]
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	// check if item exists in the db
 	if ItemExists(database.DB, user_id, item_name) {
 		// delete item from db
-		_, err := database.DB.Query(`DELETE FROM Budget_Items WHERE user_id = ? 
+		_, err = database.DB.Query(`DELETE FROM Budget_Items WHERE user_id = ? 
 		AND budget_name = ? AND item_name = ?`, user_id, budget_name, item_name)
 		if err != nil {
 			log.Fatal(err)
@@ -344,20 +304,12 @@ func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request
 	var err error
 	vars := mux.Vars(r)
 	budget_name := vars["budget_name"]
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	var manageBudget ManageBudgets
 	err = json.NewDecoder(r.Body).Decode(&manageBudget)
@@ -389,20 +341,12 @@ func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Re
 	vars := mux.Vars(r)
 	budget_name := vars["budget_name"]
 	item_name := vars["item_name"]
-	// check if token is valid or expired
-	token := r.Header.Get("Authorization")
-	token = strings.TrimPrefix(token, "Bearer ")
-	claims, err := auth.ValidateJWT(token)
-	if err != nil {
-		if err.Error() == "token has expired" {
-			http.Error(w, "Token has expired, please log in again", http.StatusUnauthorized)
-			return
-		}
-		http.Error(w, "Invalid token, please log in again", http.StatusUnauthorized)
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
-	// get user id from jwt
-	user_id := claims.UserID
 
 	var budget_item BudgetItems
 	_ = json.NewDecoder(r.Body).Decode(&budget_item)
