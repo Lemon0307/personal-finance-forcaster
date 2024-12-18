@@ -70,7 +70,7 @@ func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
 	return true, nil
 }
 
-func LoginHandler(w http.ResponseWriter, r *http.Request) {
+func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 

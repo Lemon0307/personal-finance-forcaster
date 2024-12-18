@@ -22,8 +22,7 @@ func main() {
 	budgets.BudgetRoutes(router, &budgets.BudgetHandler{})
 	transactions.TransactionRoutes(router, &transactions.TransactionHandler{})
 	forecast.ForecastRoutes(router, &forecast.ForecastHandler{})
-	router.HandleFunc("/sign_up", auth.SignUpHandler).Methods("POST")
-	router.HandleFunc("/login", auth.LoginHandler).Methods("POST")
+	auth.AuthenticationRoutes(router, &auth.AuthenticationHandler{})
 	router.HandleFunc("/get_questions", auth.SQHandler).Methods("GET")
 
 	c := cors.New(cors.Options{

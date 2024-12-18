@@ -90,7 +90,7 @@ CREATE TABLE IF NOT EXISTS Transactions (
 func InitDB() error {
 	config := mysql.Config{
 		User:                 "root",
-		Passwd:               "Lemonadetv2027!?",
+		Passwd:               "pffpassword",
 		Net:                  "tcp",
 		Addr:                 "localhost:3306",
 		DBName:               "pff",

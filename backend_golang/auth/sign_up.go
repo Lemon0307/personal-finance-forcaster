@@ -70,7 +70,7 @@ func (date *Date) UnmarshalJSON(b []byte) error {
 
 // main sign up process
 
-func SignUpHandler(w http.ResponseWriter, r *http.Request) {
+func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 

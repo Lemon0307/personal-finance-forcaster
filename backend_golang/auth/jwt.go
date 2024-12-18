@@ -13,14 +13,17 @@ import (
 var key = []byte("pfftesting")
 
 func (account *Account) GenerateJWT() (string, error) {
+	// set JWT expiration date
 	expiration_time := time.Now().Add(24 * time.Hour)
 
+	// set up information that is stored in the JWT
 	claims := &Claims{
 		UserID: account.UserID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiration_time),
 		},
 	}
+	// encode claims and sign with secret key
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	token_string, err := token.SignedString(key)
 	if err != nil {
@@ -32,6 +35,7 @@ func (account *Account) GenerateJWT() (string, error) {
 
 func ValidateJWT(token_string string) (*Claims, error) {
 	claims := &Claims{}
+	// decrypt jwt to
 	token, err := jwt.ParseWithClaims(token_string, claims,
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
