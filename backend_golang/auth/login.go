@@ -59,8 +59,11 @@ func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
 		sq = append(sq, Security_Questions{question, answer})
 	}
 	// check if answers to questions match
+
 	for i := 0; i < len(sq); i++ {
-		if account.Security_Questions[i].Answer != sq[i].Answer {
+		if len(account.Security_Questions) < len(sq) {
+			return false, nil
+		} else if account.Security_Questions[i].Answer != sq[i].Answer {
 			return false, nil
 		}
 	}
@@ -108,6 +111,12 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 					http.StatusInternalServerError)
 				return
 			}
+		} else {
+			// return error message
+			w.Header().Set("Content-Type", "application/json")
+			http.Error(w, `Not enough security questions or security 
+			questions are invalid, please try again`,
+				http.StatusUnauthorized)
 		}
 	}
 }
