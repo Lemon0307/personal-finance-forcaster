@@ -31,8 +31,8 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 		}
 		return false, err
 	}
-	// check if password matches with password in db
-	account.User.HashPassword(db_salt)
+	// check if password matches with  password in db
+	account.User.HashPassword(db_salt  )
 	if account.User.Password == db_hash {
 		return true, nil
 	}

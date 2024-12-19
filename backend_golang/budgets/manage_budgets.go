@@ -21,13 +21,6 @@ func BudgetExists(db *sql.DB, user_id string, budget_name string) bool {
 	return res
 }
 
-// check if a budget item with item_name and user_id exists in the db
-func BudgetItemExists(db *sql.DB, user_id string, item_name string) bool {
-	var res bool
-	_ = db.QueryRow("SELECT EXISTS(SELECT * FROM Budget_Items WHERE item_name = ? AND user_id = ?)", item_name, user_id).Scan(&res)
-	return res
-}
-
 // check if an item with item_name and user_id exists in the db
 func ItemExists(db *sql.DB, user_id string, item_name string) bool {
 	var res bool

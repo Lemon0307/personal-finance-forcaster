@@ -19,6 +19,8 @@ func main() {
 	defer database.CloseDB()
 
 	router := mux.NewRouter()
+	// separated routes from auth so that auth does not use
+	// jwt middleware
 	mainRouter := router.PathPrefix("/main").Subrouter()
 
 	auth.AuthenticationRoutes(router, &auth.AuthenticationHandler{})

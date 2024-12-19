@@ -281,6 +281,6 @@ func (date *Date) UnmarshalJSON(b []byte) error {
 func TransactionRoutes(router *mux.Router, TransactionService TransactionService) {
 	router.HandleFunc("/transactions/{year}/{month}", TransactionService.GetTransactions).Methods("GET")
 	router.HandleFunc("/transactions/add_transaction", TransactionService.AddTransaction).Methods("POST")
-	// router.HandleFunc("/transactions/{year}/{month}/update_transaction/{transaction_id}", TransactionService.UpdateTransaction).Methods("PUT")
-	router.HandleFunc("/transactions/{year}/{month}/{item_name}/remove_transaction/{transaction_id}", TransactionService.RemoveTransaction).Methods("DELETE")
+	router.HandleFunc("/transactions/{year}/{month}/{item_name}/remove_transaction/{transaction_id}", 
+	TransactionService.RemoveTransaction).Methods("DELETE")
 }
