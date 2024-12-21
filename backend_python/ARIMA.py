@@ -40,6 +40,7 @@ def ARIMA(data, a, b, months):
         last += forecast[i]
         last_error = forecast[i] - a*last
 
+    print(forecast)
     return np.array(forecast)
 
 def estimate_first_ar(data):

@@ -5,9 +5,6 @@ import "time"
 type BudgetItem struct {
 	BudgetName string `json:"budget_name"`
 	ItemName   string `json:"item_name"`
-	// BudgetCost  float32 `json:"budget_cost"`
-	// Description string  `json:"description"`
-	// Priority    float32 `json:"priority"`
 }
 
 type Transactions struct {

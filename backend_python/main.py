@@ -63,6 +63,7 @@ class RecommendBudget(Resource):
             'recommended_budget_amount': avg
         })
 
+
 api.add_resource(Forecast, '/forecast/')
 api.add_resource(RecommendBudget, '/recommend_budget/')
 

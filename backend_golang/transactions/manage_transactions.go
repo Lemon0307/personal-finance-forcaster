@@ -93,9 +93,10 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 	}
 
 	if !exists {
-		_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, month, year) VALUES (?, ?, ?, ?)`,
+		_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, budget_name, month, year) VALUES (?, ?, ?, ?, ?)`,
 			user_id,
 			manageTransactions.BudgetItem.ItemName,
+			manageTransactions.BudgetItem.BudgetName,
 			month,
 			year)
 		if err != nil {
@@ -105,7 +106,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 
 	manageTransactions.Transactions[0].TransactionID = GenerateTransactionID()
 	_, err = database.DB.Exec(`INSERT INTO Transactions (user_id, transaction_id, transaction_name, transaction_type, 
-	amount, date, month, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+	amount, date, month, year, item_name, budget_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		user_id,
 		manageTransactions.Transactions[0].TransactionID,
 		manageTransactions.Transactions[0].TransactionName,
@@ -113,7 +114,9 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		manageTransactions.Transactions[0].Amount,
 		manageTransactions.Transactions[0].Date.Time,
 		month,
-		year)
+		year,
+		manageTransactions.BudgetItem.ItemName,
+		manageTransactions.BudgetItem.BudgetName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -125,23 +128,6 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
-
-// func (transaction *TransactionHandler) UpdateTransaction(w http.ResponseWriter, r *http.Request) {
-// var err error
-// vars := mux.Vars(r)
-// year := vars["year"]
-// month := vars["month"]
-// transaction_id := vars["transaction_id"]
-// // check if token is valid or expired
-// token := r.Header.Get("Authorization")
-// token = strings.TrimPrefix(token, "Bearer ")
-// claims, err := auth.ValidateJWT(token)
-// if err != nil {
-// 	log.Fatal(err)
-// }
-// // get user id from jwt
-// user_id := claims.UserID
-// }
 
 func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -281,6 +267,6 @@ func (date *Date) UnmarshalJSON(b []byte) error {
 func TransactionRoutes(router *mux.Router, TransactionService TransactionService) {
 	router.HandleFunc("/transactions/{year}/{month}", TransactionService.GetTransactions).Methods("GET")
 	router.HandleFunc("/transactions/add_transaction", TransactionService.AddTransaction).Methods("POST")
-	router.HandleFunc("/transactions/{year}/{month}/{item_name}/remove_transaction/{transaction_id}", 
-	TransactionService.RemoveTransaction).Methods("DELETE")
+	router.HandleFunc("/transactions/{year}/{month}/{item_name}/remove_transaction/{transaction_id}",
+		TransactionService.RemoveTransaction).Methods("DELETE")
 }
