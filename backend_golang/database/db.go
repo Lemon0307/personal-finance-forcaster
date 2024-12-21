@@ -84,7 +84,6 @@ CREATE TABLE IF NOT EXISTS Transactions (
     ON DELETE CASCADE ON UPDATE CASCADE
 );
 `
-
 	_, err := db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("failed to create tables: %v", err)
