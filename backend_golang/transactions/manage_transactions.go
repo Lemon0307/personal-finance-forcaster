@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"golang/auth"
+	"golang/budgets"
 	"golang/database"
 	"log"
 	"net/http"
@@ -15,11 +16,13 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// generates transaction id
 func GenerateTransactionID() string {
 	res := uuid.New()
 	return res.String()
 }
 
+// switch case to map month in string to map in int
 func MonthToInt(month string) int {
 	switch month {
 	case "January":
@@ -50,14 +53,18 @@ func MonthToInt(month string) int {
 	return 0
 }
 
-func TransactionExists(db *sql.DB, transaction_id string, user_id string) bool {
+func TransactionExists(db *sql.DB, transaction_id, user_id string, month, year int,
+	item_name, budget_name string) bool {
 	var res bool
+	// query transactions table for a record that contains user id and transaction id
 	err := db.QueryRow(`SELECT EXISTS(SELECT * FROM transactions WHERE transaction_id = ?
-	AND user_id = ?)`, transaction_id, user_id).
+	AND user_id = ? AND month = ? AND year = ? AND item_name = ? AND budget_name = ?)`,
+		transaction_id, user_id, month, year, item_name, budget_name).
 		Scan(&res)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println(res)
 	return res
 }
 
@@ -70,6 +77,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		return
 	}
 
+	// decodes json into session
 	var manageTransactions ManageTransactions
 	err = json.NewDecoder(r.Body).Decode(&manageTransactions)
 	if err != nil {
@@ -78,60 +86,77 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		return
 	}
 
-	month := MonthToInt(manageTransactions.Transactions[0].Date.Month().String())
-	year := manageTransactions.Transactions[0].Date.Year()
+	// check if budget item exists
+	if budgets.ItemExists(database.DB, user_id, manageTransactions.BudgetItem.ItemName,
+		manageTransactions.BudgetItem.BudgetName) {
+		// extracts month and year from the date of transaction
+		month := MonthToInt(manageTransactions.Transactions[0].Date.Month().String())
+		year := manageTransactions.Transactions[0].Date.Year()
 
-	var exists bool
-	err = database.DB.QueryRow(`SELECT EXISTS(SELECT * FROM Monthly_Costs WHERE 
-	month = ? AND year = ? AND item_name = ? AND user_id = ?)`,
-		month,
-		year,
-		manageTransactions.BudgetItem.ItemName,
-		user_id).Scan(&exists)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if !exists {
-		_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, budget_name, month, year) VALUES (?, ?, ?, ?, ?)`,
-			user_id,
-			manageTransactions.BudgetItem.ItemName,
-			manageTransactions.BudgetItem.BudgetName,
+		var exists bool
+		// finds if a record of month and year exists in monthly costs table
+		err = database.DB.QueryRow(`SELECT EXISTS(SELECT * FROM Monthly_Costs WHERE 
+		month = ? AND year = ? AND item_name = ? AND user_id = ?)`,
 			month,
-			year)
+			year,
+			manageTransactions.BudgetItem.ItemName,
+			user_id).Scan(&exists)
 		if err != nil {
 			log.Fatal(err)
 		}
-	}
 
-	manageTransactions.Transactions[0].TransactionID = GenerateTransactionID()
-	_, err = database.DB.Exec(`INSERT INTO Transactions (user_id, transaction_id, transaction_name, transaction_type, 
-	amount, date, month, year, item_name, budget_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		user_id,
-		manageTransactions.Transactions[0].TransactionID,
-		manageTransactions.Transactions[0].TransactionName,
-		manageTransactions.Transactions[0].TransactionType,
-		manageTransactions.Transactions[0].Amount,
-		manageTransactions.Transactions[0].Date.Time,
-		month,
-		year,
-		manageTransactions.BudgetItem.ItemName,
-		manageTransactions.BudgetItem.BudgetName)
-	if err != nil {
-		log.Fatal(err)
-	}
+		// if the record doesn't exist then add a record of monthly costs
+		if !exists {
+			_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, 
+			budget_name, month, year) VALUES (?, ?, ?, ?, ?)`,
+				user_id,
+				manageTransactions.BudgetItem.ItemName,
+				manageTransactions.BudgetItem.BudgetName,
+				month,
+				year)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 
-	response := Response{
-		Message:    "Successfully added transaction",
-		StatusCode: 201,
+		// generate a transaction id for the transaction
+		manageTransactions.Transactions[0].TransactionID = GenerateTransactionID()
+		// add transaction data to the database
+		_, err = database.DB.Exec(`INSERT INTO Transactions (user_id, transaction_id, 
+		transaction_name, transaction_type, 
+		amount, date, month, year, item_name, budget_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			user_id,
+			manageTransactions.Transactions[0].TransactionID,
+			manageTransactions.Transactions[0].TransactionName,
+			manageTransactions.Transactions[0].TransactionType,
+			manageTransactions.Transactions[0].Amount,
+			manageTransactions.Transactions[0].Date.Time,
+			month,
+			year,
+			manageTransactions.BudgetItem.ItemName,
+			manageTransactions.BudgetItem.BudgetName)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// success message
+		response := Response{
+			Message:    "Successfully added transaction",
+			StatusCode: 201,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, "The budget item does not exist, please try again",
+			http.StatusNotFound)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
 }
 
 func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
+	// get month, year, item name and budget name from url
 	year, _ := strconv.Atoi(vars["year"])
 	month, _ := strconv.Atoi(vars["month"])
 	item_name := vars["item_name"]
@@ -148,31 +173,31 @@ func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r 
 
 	// find all transactions related to a budget item and a month, year
 	rows, err := database.DB.Query(`
-SELECT 
-    t.transaction_id,
-    t.transaction_name,
-    t.transaction_type,
-    t.amount,
-    t.date
-FROM 
-    Transactions t
-WHERE 
-    t.user_id = ?
-    AND t.budget_name = ? 
-    AND t.item_name = ? 
-    AND t.month = ? 
-    AND t.year = ?;
-
-
+	SELECT 
+		t.transaction_id,
+		t.transaction_name,
+		t.transaction_type,
+		t.amount,
+		t.date
+	FROM 
+		Transactions t
+	WHERE 
+		t.user_id = ?
+		AND t.budget_name = ? 
+		AND t.item_name = ? 
+		AND t.month = ? 
+		AND t.year = ?;
 	`, user_id, budget_name, item_name, month, year)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// add budget name, item name and month year to results
 	results.BudgetItem.BudgetName = budget_name
 	results.BudgetItem.ItemName = item_name
 	results.MonthlyCosts = MonthlyCosts{Month: month, Year: year}
 
+	// add array of transactions to response
 	for rows.Next() {
 		var t Transactions
 		var date string
@@ -199,15 +224,18 @@ WHERE
 
 	// show results
 	w.Header().Set("Content-Type", "application/json")
+	// parse results struct to json
 	json.NewEncoder(w).Encode(results)
 }
 
 func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
-	year := vars["year"]
-	month := vars["month"]
+	// get month, year, item name and transaction id from url
+	year, _ := strconv.Atoi(vars["year"])
+	month, _ := strconv.Atoi(vars["month"])
 	item_name := vars["item_name"]
+	budget_name := vars["budget_name"]
 	transaction_id := vars["transaction_id"]
 
 	// extracts user_id from jwt (performed in jwt middleware)
@@ -218,16 +246,18 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 	}
 
 	// check if transaction exists in the db
-	transaction_exists := TransactionExists(database.DB, transaction_id, user_id)
+	transaction_exists := TransactionExists(database.DB, transaction_id, user_id, month, year,
+		item_name, budget_name)
 	if transaction_exists {
 		// delete transaction
 		// checks if transaction belongs to the user
 		_, err = database.DB.Exec(`
 		DELETE FROM Transactions
 		WHERE transaction_id = ? 
-		AND user_id = (SELECT user_id FROM Monthly_Costs WHERE item_name = ? AND month = ? AND year = ?);
+		AND user_id = (SELECT user_id FROM Monthly_Costs WHERE item_name = ? 
+		AND month = ? AND year = ? AND budget_name = ?);
 `,
-			transaction_id, item_name, month, year)
+			transaction_id, item_name, month, year, budget_name)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -241,8 +271,8 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 		json.NewEncoder(w).Encode(response)
 	} else {
 		// return error message
-		http.Error(w, "transaction with id"+transaction_id+" and in budget item"+
-			item_name+"doesn't exist, please try again", http.StatusNotFound)
+		http.Error(w, "transaction with id"+transaction_id+" and in budget item "+
+			item_name+" doesn't exist, please try again", http.StatusNotFound)
 	}
 }
 
@@ -260,8 +290,10 @@ func (date *Date) UnmarshalJSON(b []byte) error {
 }
 
 func TransactionRoutes(router *mux.Router, TransactionService TransactionService) {
-	router.HandleFunc("/transactions/{budget_name}/{item_name}/{year}/{month}", TransactionService.GetTransactions).Methods("GET")
-	router.HandleFunc("/transactions/add_transaction", TransactionService.AddTransaction).Methods("POST")
-	router.HandleFunc("/transactions/{year}/{month}/{item_name}/remove_transaction/{transaction_id}",
+	router.HandleFunc("/transactions/{budget_name}/{item_name}/{year}/{month}",
+		TransactionService.GetTransactions).Methods("GET")
+	router.HandleFunc("/transactions/add_transaction", TransactionService.AddTransaction).
+		Methods("POST")
+	router.HandleFunc(`/transactions/{year}/{month}/{budget_name}/{item_name}/remove_transaction/{transaction_id}`,
 		TransactionService.RemoveTransaction).Methods("DELETE")
 }

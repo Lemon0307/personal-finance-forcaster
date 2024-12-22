@@ -26,22 +26,21 @@ def ARIMA(data, a, b, months):
 
     error = np.zeros(len(data))
 
-
-    for i in range(1, len(data)):
-        # linear combination of phi and theta with each data and its error
-        prediction[i] = np.dot([a, b], [data[i-1], error[i-1]])
-        error[i] = data[i] - prediction[i]
+    lagged_matrix = np.column_stack((data[:-1], error[:-1]))
+    prediction[1:] = lagged_matrix @ np.array([a, b])
+    error[1:] = data[1:] - prediction[1:]
 
     last = data[-1]
     last_error = error[-1]
 
-    for i in range(months):
-        forecast[i] = np.dot([a, b], [last, last_error])
-        last += forecast[i]
-        last_error = forecast[i] - a*last
+    lagged_forecast = np.zeros((months, 2))
+    lagged_forecast[0] = [data[-1], error[-1]]
+    for i in range(1, months):
+        lagged_forecast[i] = [lagged_forecast[i-1] @ np.array([a, b]),
+        lagged_forecast[i-1, 0]]
+    forecast[:] = lagged_forecast[:, 0]
 
-    print(forecast)
-    return np.array(forecast)
+    return forecast
 
 def estimate_first_ar(data):
     lag_1 = data[:-1]

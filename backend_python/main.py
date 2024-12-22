@@ -7,14 +7,16 @@ app = Flask(__name__)
 api = Api(app)
 
 class Forecast(Resource):
-    def post(self): 
+    def post(self):
         jsonData = request.get_json()
+        # get the number of months to forecast from url
         months = request.args.get('months')
         if not jsonData:
             return jsonify({"message": "cannot find JSON data provided"}, 400)
 
         transactions = []
         dates = []
+        # append all transaction amount to transactions array
         for transaction in jsonData:
             month = transaction.get('Month')
             year = transaction.get('Year')
@@ -22,13 +24,16 @@ class Forecast(Resource):
             transactions.append(total_amount)
             dates.append({'month': month, 'year': year})
         
+        # forecast transactions
         forecasted_transactions = forecast(transactions, int(months))
 
+        # generate month and year for forecasted transactions
         latest = max(dates, key = lambda x: (x['year'], x['month']))
         latest_month = latest['month']
         latest_year = latest['year']
 
         res = []
+        # append all forecasted transactions and their date onto res
         for i in range(len(forecasted_transactions)):
             forecast_month = (latest_month + i+1) % 12
             forecast_year = latest_year + (latest_month + i+1) // 12
@@ -40,32 +45,14 @@ class Forecast(Resource):
             res.append({
                 'month': forecast_month,
                 'year': forecast_year,
-                'forecasted_transaction': forecasted_transactions[i]
+                'forecasted_transaction': forecasted_transactions[i],
+                'recommended_budget': np.average(forecasted_transactions)
             })
 
         return jsonify(res)
 
-class RecommendBudget(Resource):
-    def post(self): 
-        jsonData = request.get_json()
-        if not jsonData:
-            return jsonify({"message": "cannot find JSON data provided"}, 400)
-
-        transactions = []
-        for transaction in jsonData:
-            total_amount = transaction.get('TotalAmount')
-            transactions.append(total_amount)
-        
-        recommendation = forecast(transactions, 3)
-        avg = np.mean(recommendation)
-
-        return jsonify({
-            'recommended_budget_amount': avg
-        })
-
 
 api.add_resource(Forecast, '/forecast/')
-api.add_resource(RecommendBudget, '/recommend_budget/')
 
 if __name__ == '__main__':
     app.run(debug=True, host='localhost', port=5000)

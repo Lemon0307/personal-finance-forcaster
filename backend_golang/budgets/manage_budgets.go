@@ -22,10 +22,10 @@ func BudgetExists(db *sql.DB, user_id string, budget_name string) bool {
 }
 
 // check if an item with item_name and user_id exists in the db
-func ItemExists(db *sql.DB, user_id string, item_name string) bool {
+func ItemExists(db *sql.DB, user_id string, item_name string, budget_name string) bool {
 	var res bool
-	_ = db.QueryRow("SELECT EXISTS(SELECT * FROM Budget_Items WHERE item_name = ? AND user_id = ?)",
-		item_name, user_id).Scan(&res)
+	_ = db.QueryRow("SELECT EXISTS(SELECT * FROM Budget_Items WHERE item_name = ? AND user_id = ? AND budget_name = ?)",
+		item_name, user_id, budget_name).Scan(&res)
 	return res
 }
 
@@ -129,7 +129,7 @@ func (budget *BudgetHandler) AddBudgetItem(w http.ResponseWriter, r *http.Reques
 	}
 
 	// check if item already exists in the database
-	if !ItemExists(database.DB, user_id, addBudgetItem.ItemName) {
+	if !ItemExists(database.DB, user_id, addBudgetItem.ItemName, budget_name) {
 		// add budget item to the database
 		_, err = database.DB.Exec(`INSERT INTO Budget_Items (item_name, budget_name, user_id, 
 		description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
@@ -273,7 +273,7 @@ func (budget *BudgetHandler) RemoveBudgetItems(w http.ResponseWriter, r *http.Re
 	}
 
 	// check if item exists in the db
-	if ItemExists(database.DB, user_id, item_name) {
+	if ItemExists(database.DB, user_id, item_name, budget_name) {
 		// delete item from db
 		_, err = database.DB.Query(`DELETE FROM Budget_Items WHERE user_id = ? 
 		AND budget_name = ? AND item_name = ?`, user_id, budget_name, item_name)
