@@ -48,7 +48,8 @@ class Forecast(Resource):
                 'forecasted_transaction': forecasted_transactions[i],
             })
 
-        return jsonify({'forecast': res, 'recommended_budget': np.average(forecasted_transactions)})
+        return jsonify({'forecast': res, 'recommended_budget': 
+        np.average(forecasted_transactions)})
 
 
 api.add_resource(Forecast, '/forecast/')

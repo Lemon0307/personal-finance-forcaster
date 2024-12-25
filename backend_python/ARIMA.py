@@ -3,7 +3,7 @@ import numpy as np
 def forecast(data, months):
     data = np.array(data)
     
-    # calculates the n-th discrete difference along the given axis.
+    # calculates the difference between data points
     difference = np.diff(data)
 
     #finds a suitable value for phi
@@ -21,37 +21,55 @@ def forecast(data, months):
 def ARIMA(data, a, b, months):
     
     prediction = np.zeros(len(data))
-
     forecast = np.zeros(months)
-
     error = np.zeros(len(data))
 
+    # create a matrix for current data and errors
     lagged_matrix = np.column_stack((data[:-1], error[:-1]))
+
+    # predict for the given data
     prediction[1:] = lagged_matrix @ np.array([a, b])
+
+    # calculate the error for each data point
     error[1:] = data[1:] - prediction[1:]
 
+    # store last value and error for forecasting
     last = data[-1]
     last_error = error[-1]
 
+    # create another matrix for forecasting
     lagged_forecast = np.zeros((months, 2))
-    lagged_forecast[0] = [data[-1], error[-1]]
+    lagged_forecast[0] = [last, last_error]
+
+    # forecast future values using the params a and b
     for i in range(1, months):
         lagged_forecast[i] = [lagged_forecast[i-1] @ np.array([a, b]),
         lagged_forecast[i-1, 0]]
+
+    # store forecasted values from matrix into forecast array
     forecast[:] = lagged_forecast[:, 0]
 
     return forecast
 
-def estimate_first_ar(data):
-    lag_1 = data[:-1]
-    y_t = data[1:]
-    phi = np.corrcoef(lag_1, y_t)[0, 1]
+def estimate_first_ar(difference):
+    previous_values = difference[:-1]
+    current_values = difference[1:]
+
+    # calculates the r value for the data sets
+    # which is the value of phi
+    phi = np.corrcoef(previous_values, current_values)[0, 1]
     return phi
 
-def estimate_first_ma(data, a):
-    predicted_ar = np.roll(data, 1) * a
-    error = data - predicted_ar
-    error = error[1:]
-    
-    theta_1 = np.corrcoef(error[:-1], error[1:])[0, 1]
-    return theta_1
+def estimate_first_ma(difference, a):
+    # predict AR component
+    predicted_ar = np.roll(difference, 1) * a
+
+    # calculate errors
+    error = difference - predicted_ar
+    error = error[1:] # first value doesn't matter so we drop it
+        
+    # estimate MA coefficient using PCC and calculate the r value
+    theta = np.corrcoef(error[:-1], error[1:])[0, 1]
+    return theta
+
+print(forecast([10.1, 10.2, 9.3, 15.5, 14.4, 12.5, 15.0, 14.1, 15.3], 3))
