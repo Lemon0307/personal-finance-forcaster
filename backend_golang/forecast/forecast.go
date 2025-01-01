@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"golang/auth"
 	"golang/budgets"
 	"golang/database"

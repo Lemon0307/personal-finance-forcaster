@@ -30,6 +30,10 @@ class Forecast(Resource):
         # forecast transactions
         forecasted_transactions = forecast(transactions, int(months))
 
+        if forecasted_transactions.any() == [-1]:
+            return jsonify({'message':
+            'There are not enough transactions to make an accurate forecast, please provide more'})
+
         # generate month and year for forecasted transactions
         latest = max(dates, key = lambda x: (x['year'], x['month']))
         latest_month = latest['month']
@@ -51,9 +55,25 @@ class Forecast(Resource):
                 'forecasted_transaction': forecasted_transactions[i],
             })
 
-        return jsonify({'forecast': res, 'recommended_budget': 
-        np.average(forecasted_transactions)})
+        #combine the original transactions with the forecast
+        combined_transactions = np.concatenate((transactions, forecasted_transactions))
 
+        #approximating the original and forecasted transactions as a polynomial
+        x = np.arange(len(combined_transactions))
+        coefficients = np.polyfit(x, combined_transactions, deg=7)
+        fitted_poly = np.poly1d(coefficients)
+
+        #integrate the polynomial
+        integral = np.polyint(fitted_poly)
+        first = x[0]
+        last = x[-1]
+
+        #calculate the mean value of the transactions and set it as recommended budget
+        mean_value = (integral(last) - integral(first)) / (last - first)
+        recommended = mean_value
+
+        return jsonify({'forecast': res, 'recommended_budget': 
+        recommended})
 
 api.add_resource(Forecast, '/forecast/')
 

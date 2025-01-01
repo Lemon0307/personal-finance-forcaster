@@ -5,6 +5,10 @@ def forecast(data, months):
     
     # calculates the difference between data points
     difference = np.diff(data)
+    
+    #return a number (-1) if there are nan of infinite numbers in difference
+    if np.any(np.isnan(difference)) or np.any(np.isinf(difference)):
+        return [-1]
 
     #finds a suitable value for phi
     a = estimate_first_ar(difference)
@@ -14,6 +18,10 @@ def forecast(data, months):
 
     # the main ARIMA model
     forecast = ARIMA(difference, a, b, months)
+
+    #return a number (-1) if there are nan of infinite numbers in forecast
+    if np.any(np.isnan(forecast)) or np.any(np.isinf(forecast)):
+        return [-1]
 
     # returns the last value of data and forecast as an array
     return forecast + data[-1]
