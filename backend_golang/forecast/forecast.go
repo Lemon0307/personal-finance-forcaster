@@ -79,7 +79,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println(res)
+
 		// request the python forecasting api
 		req, err := http.NewRequest("POST", "http://localhost:5000/forecast?months="+months,
 			bytes.NewBuffer([]byte(resString)))

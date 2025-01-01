@@ -15,7 +15,7 @@ var key = []byte("pfftesting")
 
 func (account *Account) GenerateJWT() (string, error) {
 	// set JWT expiration date
-	expiration_time := time.Now().Add(24 * time.Hour)
+	expiration_time := time.Now().Add(720 * time.Hour)
 
 	// set up information that is stored in the JWT
 	claims := &Claims{

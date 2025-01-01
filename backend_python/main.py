@@ -2,9 +2,12 @@ from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
 from ARIMA import forecast
 import numpy as np
+from flask_cors import CORS
 
 app = Flask(__name__)
+
 api = Api(app)
+CORS(app)
 
 class Forecast(Resource):
     def post(self):

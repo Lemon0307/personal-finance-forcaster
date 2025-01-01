@@ -71,5 +71,3 @@ def estimate_first_ma(difference, a):
     # estimate MA coefficient using PCC and calculate the r value
     theta = np.corrcoef(error[:-1], error[1:])[0, 1]
     return theta
-
-print(forecast([10.1, 10.2, 9.3, 15.5, 14.4, 12.5, 15.0, 14.1, 15.3], 3))
