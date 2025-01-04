@@ -66,9 +66,9 @@ const Login = () => {
   };
 
   return (
-    <div>
+    <div className="p-40">
       {step === 1 && (
-        <div>
+        <div className="grid place-items-center">
           <h2>Login</h2>
           <input
             type="username"
@@ -76,6 +76,7 @@ const Login = () => {
             placeholder="Username"
             value={details.username}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="email"
@@ -83,6 +84,7 @@ const Login = () => {
             placeholder="Email"
             value={details.email}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="password"
@@ -90,17 +92,18 @@ const Login = () => {
             placeholder="Password"
             value={details.password}
             onChange={handleDetailsChange}
-          />
+            className="py-2"
+            />
           
           <button onClick={() => setStep(2)}>Next</button>
         </div>
       )}
 
       {step === 2 && (
-        <div>
+        <div className="grid place-items-center">
           <h2>Security Questions</h2>
           {securityQuestions.map((sq, index) => (
-            <div key={index}>
+            <div key={index} className="p-2">
               <select
                 value={sq.question}
                 onChange={(e) =>
@@ -126,9 +129,11 @@ const Login = () => {
               />
             </div>
           ))}
-          <button onClick={addSecurityQuestion}>Add Another Question</button>
-          {/* <button onClick={() => setStep(1)}>Back</button> */}
-          <button onClick={handleSubmit}>Submit</button>
+          <div className="grid">
+            <button onClick={addSecurityQuestion}>Add Another Question</button>
+            {/* <button onClick={() => setStep(1)}>Back</button> */}
+            <button onClick={handleSubmit}>Submit</button>            
+          </div>
         </div>
       )}
     </div>

@@ -22,73 +22,76 @@ ChartJS.register(
   );
 
 const Home = () => {
-    
-    const [transactions, setTransactions] = useState()
 
+    let redirect = useNavigate()
+    
     useEffect(() => {
-        const getTransactions = async () => {
-            let date = new Date()
-            const token = localStorage.getItem('token')
-            try {
-                const response = await axios.get(`http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
+        if (localStorage.getItem('token') !== null) {
+            const getTransactions = async () => {
+                let date = new Date()
+                const token = localStorage.getItem('token')
+                try {
+                    const response = await axios.get(`http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+        
+                    const groupedData = response.data.reduce((acc, budget) => {
+                        const budgetName = budget.budget_item.budget_name;
+                        const itemName = budget.budget_item.item_name;
+                        const transactionAmount = budget.transactions ? budget.transactions.reduce((sum, transaction) => sum + transaction.amount, 0) : 0;
+        
+                        if (!acc[budgetName]) {
+                            acc[budgetName] = {};
+                        }
+        
+                        // Store transaction counts for each item under a budget
+                        acc[budgetName][itemName] = transactionAmount;
+        
+                        return acc;
+                    }, {});
+
+                // Get unique budget names and item names
+                const budgetNames = Object.keys(groupedData);
+                const allItemNames = new Set();
+                budgetNames.forEach(budget => {
+                    Object.keys(groupedData[budget]).forEach(item => {
+                        allItemNames.add(item);
+                    });
                 });
-    
-                const groupedData = response.data.reduce((acc, budget) => {
-                    const budgetName = budget.budget_item.budget_name;
-                    const itemName = budget.budget_item.item_name;
-                    const transactionAmount = budget.transactions ? budget.transactions.reduce((sum, transaction) => sum + transaction.amount, 0) : 0;
-    
-                    if (!acc[budgetName]) {
-                        acc[budgetName] = {};
-                    }
-    
-                    // Store transaction counts for each item under a budget
-                    acc[budgetName][itemName] = transactionAmount;
-    
-                    return acc;
-                }, {});
 
-            // Get unique budget names and item names
-            const budgetNames = Object.keys(groupedData);
-            const allItemNames = new Set();
-            budgetNames.forEach(budget => {
-                Object.keys(groupedData[budget]).forEach(item => {
-                    allItemNames.add(item);
+                const itemNames = Array.from(allItemNames);  // Convert set to array
+
+                // Prepare data for chart
+                const labels = budgetNames;  // X-axis will have budget names
+                const datasets = itemNames.map(itemName => {
+                    return {
+                        label: itemName,
+                        data: budgetNames.map(budget => groupedData[budget][itemName] || 0), // For each budget, get the count for this item
+                        backgroundColor: getRandomColour(),
+                        borderColor: getRandomColour(),
+                        borderWidth: 1,
+                    };
                 });
-            });
 
-            const itemNames = Array.from(allItemNames);  // Convert set to array
-
-            // Prepare data for chart
-            const labels = budgetNames;  // X-axis will have budget names
-            const datasets = itemNames.map(itemName => {
-                return {
-                    label: itemName,
-                    data: budgetNames.map(budget => groupedData[budget][itemName] || 0), // For each budget, get the count for this item
-                    backgroundColor: getRandomColour(),
-                    borderColor: getRandomColour(),
-                    borderWidth: 1,
+                const chartData = {
+                    labels: labels,  // X-axis: Budget Names
+                    datasets: datasets,  // Y-axis: Transaction counts for each item
                 };
-            });
 
-            const chartData = {
-                labels: labels,  // X-axis: Budget Names
-                datasets: datasets,  // Y-axis: Transaction counts for each item
-            };
-
-            setData(chartData);  // Set chart data for rendering
-    
-            } catch (error) {
-                alert(error.response?.data || error.message);
+                setData(chartData);  // Set chart data for rendering
+        
+                } catch (error) {
+                    alert(error.response?.data || error.message);
+                }
             }
+        
+            getTransactions();
+        } else {
+            redirect('/login')
         }
-    
-        getTransactions();
-        console.log()
-    }, []);
+    }, [redirect]);
 
     const options = {
         responsive: true,
@@ -125,7 +128,6 @@ const Home = () => {
     const username = localStorage.getItem('username')
     const [choice, setChoice] = useState()
     const [data, setData] = useState(null)
-    let redirect = useNavigate()
 
     const getRandomColour = () => {
         const letters = '0123456789ABCDEF';
@@ -140,9 +142,19 @@ const Home = () => {
         setChoice(e.target.value)
     }
 
+    const logoutHandler = (e) => {
+        localStorage.removeItem('token')
+        localStorage.removeItem('email')
+        localStorage.removeItem('username')
+        redirect('/login')
+    }
+
     return (
         <div className="p-40">
-            <h1>Welcome {username}</h1>
+            <div className="flex justify-evenly">
+                <h1>Welcome {username}</h1>
+                <button onClick={logoutHandler}>Logout</button>
+            </div>
             <h1>Summary of transactions {choice}:</h1>
             {data ? (
                 <Bar className="p-20" data={data} options={options} />

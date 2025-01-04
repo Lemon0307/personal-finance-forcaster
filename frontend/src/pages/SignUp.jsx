@@ -71,9 +71,9 @@ const SignUp = () => {
   };
 
   return (
-    <div>
+    <div className="p-40">
       {step === 1 && (
-        <div>
+        <div className="grid w-11/12 justify-center">
           <h2>User Information</h2>
           <input
             type="text"
