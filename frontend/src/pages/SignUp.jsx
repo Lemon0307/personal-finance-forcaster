@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axios from "axios";
 
 const SignUp = () => {
-  // Step management
-  const [step, setStep] = useState(1);
 
   // User information state
   const [details, setDetails] = useState({
@@ -29,9 +27,11 @@ const SignUp = () => {
 
   // Available security questions
   const questions = [
-    "What is your favorite color?",
-    "What is your mother's maiden name?",
+    "What is your favourite colour?",
     "What was your first pet's name?",
+    "What is your skin colour?",
+    "What was the name of your school physical education teacher?",
+    "What was your childhood best friend’s nickname?",
     "What city were you born in?",
   ];
 
@@ -72,15 +72,15 @@ const SignUp = () => {
 
   return (
     <div className="p-40">
-      {step === 1 && (
-        <div className="grid w-11/12 justify-center">
-          <h2>User Information</h2>
+        <div className="grid place-items-center">
+          <h2>Sign Up</h2>
           <input
             type="text"
             name="username"
             placeholder="Username"
             value={details.username}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="email"
@@ -88,6 +88,7 @@ const SignUp = () => {
             placeholder="Email"
             value={details.email}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="password"
@@ -95,6 +96,7 @@ const SignUp = () => {
             placeholder="Password"
             value={details.password}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="password"
@@ -102,6 +104,7 @@ const SignUp = () => {
             placeholder="Confirm Password"
             value={details.confirm_password}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="text"
@@ -109,6 +112,7 @@ const SignUp = () => {
             placeholder="Forename"
             value={details.forename}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="text"
@@ -116,6 +120,7 @@ const SignUp = () => {
             placeholder="Surname"
             value={details.surname}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="date"
@@ -123,12 +128,14 @@ const SignUp = () => {
             placeholder="Date of Birth"
             value={details.dob}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <textarea
             name="address"
             placeholder="Address"
             value={details.address}
             onChange={handleDetailsChange}
+            className="py-2"
           />
           <input
             type="number"
@@ -136,16 +143,13 @@ const SignUp = () => {
             placeholder="Current Balance"
             value={details.current_balance}
             onChange={handleDetailsChange}
+            className="py-2"
           />
-          <button onClick={() => setStep(2)}>Next</button>
         </div>
-      )}
-
-      {step === 2 && (
-        <div>
+              <div className="grid place-items-center">
           <h2>Security Questions</h2>
           {securityQuestions.map((sq, index) => (
-            <div key={index}>
+            <div key={index} className="p-2">
               <select
                 value={sq.question}
                 onChange={(e) =>
@@ -171,11 +175,16 @@ const SignUp = () => {
               />
             </div>
           ))}
-          <button onClick={addSecurityQuestion}>Add Another Question</button>
-          {/* <button onClick={() => setStep(1)}>Back</button> */}
-          <button onClick={handleSubmit}>Submit</button>
+          <div className="grid">
+            <button onClick={addSecurityQuestion}>Add Another Question</button>
+            <button onClick={handleSubmit}>Submit</button>            
+          </div>
+          <div>
+          <h3>Already have an account? <button onClick={(e) => 
+            {e.preventDefault(); redirect('/login')}}>Login</button>
+            </h3>
         </div>
-      )}
+        </div>
     </div>
   );
 };

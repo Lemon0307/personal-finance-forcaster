@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Login = () => {
-  // Step management
-  const [step, setStep] = useState(1);
 
   // User information state
   const [details, setDetails] = useState({
@@ -23,9 +21,11 @@ const Login = () => {
 
   // Available security questions
   const questions = [
-    "What is your favorite color?",
-    "What is your mother's maiden name?",
+    "What is your favourite colour?",
     "What was your first pet's name?",
+    "What is your skin colour?",
+    "What was the name of your school physical education teacher?",
+    "What was your childhood best friend’s nickname?",
     "What city were you born in?",
   ];
 
@@ -67,7 +67,6 @@ const Login = () => {
 
   return (
     <div className="p-40">
-      {step === 1 && (
         <div className="grid place-items-center">
           <h2>Login</h2>
           <input
@@ -94,12 +93,7 @@ const Login = () => {
             onChange={handleDetailsChange}
             className="py-2"
             />
-          
-          <button onClick={() => setStep(2)}>Next</button>
         </div>
-      )}
-
-      {step === 2 && (
         <div className="grid place-items-center">
           <h2>Security Questions</h2>
           {securityQuestions.map((sq, index) => (
@@ -131,11 +125,14 @@ const Login = () => {
           ))}
           <div className="grid">
             <button onClick={addSecurityQuestion}>Add Another Question</button>
-            {/* <button onClick={() => setStep(1)}>Back</button> */}
             <button onClick={handleSubmit}>Submit</button>            
           </div>
+          <div>
+          <h3>Don't have an account? <button onClick={(e) => 
+            {e.preventDefault(); redirect('/sign-up')}}>Create Account!</button>
+            </h3>
         </div>
-      )}
+        </div>
     </div>
   );
 };
