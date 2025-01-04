@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Login = () => {
@@ -10,13 +11,10 @@ const Login = () => {
     username: "",
     email: "",
     password: "",
-    confirm_password: "",
-    forename: "",
-    surname: "",
-    dob: "",
-    address: "",
-    current_balance: "",
   });
+
+  // Redirect function
+  let redirect = useNavigate()
 
   // Security questions state
   const [securityQuestions, setSecurityQuestions] = useState([
@@ -48,17 +46,22 @@ const Login = () => {
 
   console.log(details)
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
     try {
       const userData = {
-        user: {...details, current_balance: parseFloat(details.current_balance)},
+        user: {...details},
         security_questions: securityQuestions,
       };
       console.log(userData)
-    const response = await axios.post("http://localhost:8080/sign_up", userData)
+    const response = await axios.post("http://localhost:8080/login", userData)
     alert(response.data.Message)
+    localStorage.setItem("token", response.data.Token)
+    localStorage.setItem("username", userData.user.username)
+    localStorage.setItem("email", userData.user.email)
+    e.preventDefault()
+    redirect('/')
     } catch (error) {
-        alert(error)
+      alert(error.response.data)
     }
   };
 
@@ -67,6 +70,13 @@ const Login = () => {
       {step === 1 && (
         <div>
           <h2>Login</h2>
+          <input
+            type="username"
+            name="username"
+            placeholder="Username"
+            value={details.username}
+            onChange={handleDetailsChange}
+          />
           <input
             type="email"
             name="email"

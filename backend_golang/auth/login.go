@@ -7,6 +7,7 @@ import (
 	"golang/database"
 	"log"
 	"net/http"
+	"strings"
 )
 
 // func (user *User) UserExists(db *sql.DB) (bool, error) {
@@ -32,7 +33,7 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 		return false, err
 	}
 	// check if password matches with  password in db
-	account.User.HashPassword(db_salt  )
+	account.User.HashPassword(db_salt)
 	if account.User.Password == db_hash {
 		return true, nil
 	}
@@ -60,14 +61,26 @@ func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
 	}
 	// check if answers to questions match
 
-	for i := 0; i < len(sq); i++ {
-		if len(account.Security_Questions) < len(sq) {
-			return false, nil
-		} else if account.Security_Questions[i].Answer != sq[i].Answer {
-			return false, nil
+	if len(account.Security_Questions) < len(sq) {
+		return false, nil
+	}
+
+	// makes a variable to check for matched questions and answers
+	correct := 0
+	for _, i := range sq {
+		for _, j := range account.Security_Questions {
+			// checks if each question and answer match
+			if i.Question == j.Question &&
+				strings.TrimSpace(strings.ToLower(i.Answer)) ==
+					strings.TrimSpace(strings.ToLower(j.Answer)) {
+				// increment by one if match
+				correct++
+				break
+			}
 		}
 	}
-	return true, nil
+
+	return correct == len(sq), nil
 }
 
 func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -82,6 +95,7 @@ func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Fatal(err)
 	}
+	fmt.Println(account)
 	// check if user details are present in the db
 	user_password_ok, err := account.ValidateUserAndPassword(database.DB)
 	if err != nil {
@@ -114,8 +128,7 @@ func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request)
 		} else {
 			// return error message
 			w.Header().Set("Content-Type", "application/json")
-			http.Error(w, `Not enough security questions or security 
-			questions are invalid, please try again`,
+			http.Error(w, `Not enough security questions or security questions are invalid, please try again`,
 				http.StatusUnauthorized)
 		}
 	}

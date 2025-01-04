@@ -228,6 +228,119 @@ func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r 
 	json.NewEncoder(w).Encode(results)
 }
 
+func (transaction *TransactionHandler) GetAllTransactions(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	// get month, year from url
+	year, _ := strconv.Atoi(vars["year"])
+	month, _ := strconv.Atoi(vars["month"])
+
+	// Extract user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
+		return
+	}
+
+	var results []ManageTransactions
+
+	// query all budget items of month and year
+	rows, err := database.DB.Query(`
+	SELECT 
+		bi.budget_name,
+		bi.item_name,
+		mc.month,
+		mc.year
+	FROM 
+		Budget_Items bi
+	JOIN 
+		Monthly_Costs mc
+	ON
+		bi.item_name = mc.item_name AND bi.budget_name = mc.budget_name AND bi.user_id = mc.user_id
+	WHERE 
+		bi.user_id = ? 
+		AND mc.month = ? 
+		AND mc.year = ?;
+	`, user_id, month, year)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// build results
+	for rows.Next() {
+		var bi BudgetItem
+		var mc MonthlyCosts
+
+		// get the budget name, item name, month and year from query row
+		err = rows.Scan(&bi.BudgetName, &bi.ItemName, &mc.Month, &mc.Year)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// get all transactions for the current budget of month and year
+		var transactions []Transactions
+		transRows, err := database.DB.Query(`
+		SELECT 
+			t.transaction_id,
+			t.transaction_name,
+			t.transaction_type,
+			t.amount,
+			t.date
+		FROM 
+			Transactions t
+		WHERE 
+			t.user_id = ? 
+			AND t.month = ? 
+			AND t.year = ? 
+			AND t.budget_name = ? 
+			AND t.item_name = ?;
+		`, user_id, month, year, bi.BudgetName, bi.ItemName)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// build transactions to append to budget
+		for transRows.Next() {
+			var t Transactions
+			var date string
+
+			err = transRows.Scan(&t.TransactionID, &t.TransactionName, &t.TransactionType, &t.Amount, &date)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			// Parsing date from db into format
+			t.Date.Time, err = time.Parse("2006-01-02", date)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			transactions = append(transactions, t)
+		}
+
+		// Add the result for this budget item
+		results = append(results, ManageTransactions{
+			BudgetItem:   bi,
+			Transactions: transactions,
+			MonthlyCosts: mc,
+		})
+	}
+
+	// set transactions as nil for budgets with no transactions
+	for i, item := range results {
+		if len(item.Transactions) == 0 {
+			results[i].Transactions = nil
+		}
+	}
+
+	fmt.Println(results)
+
+	// show results
+	w.Header().Set("Content-Type", "application/json")
+	// parse results struct to json
+	json.NewEncoder(w).Encode(results)
+}
+
 func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
@@ -292,6 +405,8 @@ func (date *Date) UnmarshalJSON(b []byte) error {
 func TransactionRoutes(router *mux.Router, TransactionService TransactionService) {
 	router.HandleFunc("/transactions/{budget_name}/{item_name}/{year}/{month}",
 		TransactionService.GetTransactions).Methods("GET")
+	router.HandleFunc("/transactions/{year}/{month}",
+		TransactionService.GetAllTransactions).Methods("GET")
 	router.HandleFunc("/transactions/add_transaction", TransactionService.AddTransaction).
 		Methods("POST")
 	router.HandleFunc(`/transactions/{year}/{month}/{budget_name}/{item_name}/remove_transaction/{transaction_id}`,

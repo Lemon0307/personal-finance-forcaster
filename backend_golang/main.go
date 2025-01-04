@@ -30,7 +30,6 @@ func main() {
 	budgets.BudgetRoutes(mainRouter, &budgets.BudgetHandler{})
 	transactions.TransactionRoutes(mainRouter, &transactions.TransactionHandler{})
 	forecast.ForecastRoutes(mainRouter, &forecast.ForecastHandler{})
-	router.HandleFunc("/get_questions", auth.SQHandler).Methods("GET")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:3000"},

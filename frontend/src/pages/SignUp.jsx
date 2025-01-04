@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom'; 
 import axios from "axios";
 
 const SignUp = () => {
@@ -17,6 +18,9 @@ const SignUp = () => {
     address: "",
     current_balance: "",
   });
+
+  // Redirect function
+  let redirect = useNavigate()
 
   // Security questions state
   const [securityQuestions, setSecurityQuestions] = useState([
@@ -48,7 +52,8 @@ const SignUp = () => {
 
   console.log(details)
 
-  const handleSubmit = async () => {
+
+  const handleSubmit = async (e) => {
     try {
       const userData = {
         user: {...details, current_balance: parseFloat(details.current_balance)},
@@ -57,8 +62,11 @@ const SignUp = () => {
       console.log(userData)
     const response = await axios.post("http://localhost:8080/sign_up", userData)
     alert(response.data.Message)
+    e.preventDefault()
+    // redirects to login page after success message
+    redirect('/login')
     } catch (error) {
-        alert(error)
+        alert(error.response.data)
     }
   };
 
