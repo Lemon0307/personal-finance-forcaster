@@ -1,7 +1,3 @@
-const GetDataHandler = () => {
-
-}
-
 const Forecast = () => {
     return (
         <div className="p-20">

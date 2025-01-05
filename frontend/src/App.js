@@ -1,5 +1,5 @@
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
-import {Home, Forecast, Budgets, Login, SignUp, Transactions} from './pages';
+import {Home, Forecast, Budgets, Login, SignUp, Transactions, AddBudget, UpdateBudget} from './pages';
 import {Navbar} from './components';
 
 function App() {
@@ -12,6 +12,8 @@ function App() {
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/login" element={<Login />} />
           <Route path="/budgets" element={<Budgets />} />
+          <Route path="/budgets/add-budget" element={<AddBudget />} />
+          <Route path="/budgets/update-budget" element={<UpdateBudget />}/>
           <Route path="/transactions" element={<Transactions />} />
           <Route path="/forecast" element={<Forecast />} />
         </Routes>

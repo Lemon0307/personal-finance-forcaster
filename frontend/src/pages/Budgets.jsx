@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { FaPlus } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
 import axios from "axios"
 
 const Budgets = () => {
@@ -39,7 +38,7 @@ const Budgets = () => {
     const handleSort = (e) => {
         setSort(e.target.value)
         switch (sort) {
-            
+
         }
     }
 
