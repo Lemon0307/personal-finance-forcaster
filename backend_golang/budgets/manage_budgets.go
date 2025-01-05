@@ -196,7 +196,6 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		// add budget to the hash map if budget doesn't exist in the hash map
 		if _, budget_exists := budgets[budget.BudgetName]; !budget_exists {
 			budgets[budget.BudgetName] = &ManageBudgets{
-				UserID: user_id,
 				Budget: Budget{
 					BudgetName: budget.BudgetName,
 				},
@@ -224,6 +223,7 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		budgets_array = append(budgets_array, *budget)
 	}
 
+	fmt.Println(budgets_array)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(budgets_array)
 }

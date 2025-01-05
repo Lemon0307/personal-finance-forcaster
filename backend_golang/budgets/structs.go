@@ -12,7 +12,6 @@ type BudgetItems struct {
 }
 
 type ManageBudgets struct {
-	UserID      string
 	Budget      Budget        `json:"budget"`
 	BudgetItems []BudgetItems `json:"budget_items"`
 }

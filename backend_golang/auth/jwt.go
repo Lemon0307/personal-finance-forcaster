@@ -70,7 +70,9 @@ func JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// find token from authorization header
 		tokenString := r.Header.Get("Authorization")
+		fmt.Println(tokenString)
 		if tokenString == "" {
+			fmt.Println("Missing token")
 			http.Error(w, "Missing token", http.StatusUnauthorized)
 			return
 		}

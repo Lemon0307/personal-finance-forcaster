@@ -4,7 +4,7 @@ const GetDataHandler = () => {
 
 const Forecast = () => {
     return (
-        <div className="p-40">
+        <div className="p-20">
             <h1>Welcome</h1>
         </div>
     )

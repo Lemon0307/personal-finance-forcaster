@@ -36,12 +36,20 @@ const Home = () => {
                             Authorization: `Bearer ${token}`
                         }
                     });
+
+                    console.log(response.data)
+
+                    if (!Array.isArray(response.data) || response.data.length === 0) {
+                        setHasTransactions(false);
+                        setData(null);
+                        return;
+                    }
         
                     const groupedData = response.data.reduce((acc, budget) => {
                         const budgetName = budget.budget_item.budget_name;
                         const itemName = budget.budget_item.item_name;
                         const transactionAmount = budget.transactions ? budget.transactions.reduce((sum, transaction) => sum + transaction.amount, 0) : 0;
-        
+
                         if (!acc[budgetName]) {
                             acc[budgetName] = {};
                         }
@@ -80,6 +88,7 @@ const Home = () => {
                     datasets: datasets,  // Y-axis: Transaction counts for each item
                 };
 
+                setHasTransactions(true);
                 setData(chartData);  // Set chart data for rendering
         
                 } catch (error) {
@@ -128,6 +137,7 @@ const Home = () => {
     const username = localStorage.getItem('username')
     const [choice, setChoice] = useState()
     const [data, setData] = useState(null)
+    const [hasTransactions, setHasTransactions] = useState(true);
 
     const getRandomColour = () => {
         const letters = '0123456789ABCDEF';
@@ -142,24 +152,20 @@ const Home = () => {
         setChoice(e.target.value)
     }
 
-    const logoutHandler = (e) => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('email')
-        localStorage.removeItem('username')
-        redirect('/login')
-    }
-
     return (
-        <div className="p-40">
+        <div className="p-20">
             <div className="flex justify-evenly">
                 <h1>Welcome {username}</h1>
-                <button onClick={logoutHandler}>Logout</button>
             </div>
             <h1>Summary of transactions {choice}:</h1>
-            {data ? (
-                <Bar className="p-20" data={data} options={options} />
+            {hasTransactions ? (
+                data ? (
+                    <Bar className="p-20" data={data} options={options} />
+                ) : (
+                    <p>Loading transactions...</p>
+                )
             ) : (
-                <p>Loading transactions...</p>
+            <p>You have made no transactions {choice}</p>
             )}
             <select value={choice} onChange={choiceHandler}>
                 <option value="this week">This week</option>
