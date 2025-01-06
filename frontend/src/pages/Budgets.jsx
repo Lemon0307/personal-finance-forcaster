@@ -12,6 +12,17 @@ const Budgets = () => {
         description: "",
         priority: 0.00
     })
+    const [updateBudget, setUpdateBudget] = useState({
+        budget: {budget_name: ""}
+    })
+    const [updateItem, setUpdateItem] = useState({
+        item_name: "",
+        budget_cost: 0.00,
+        description: "",
+        priority: 0.00
+    })
+    const [isEditingBudget, setIsEditingBudget] = useState(false)
+    const [isEditingItem, setIsEditingItem] = useState(false)
     const token = localStorage.getItem('token')
     const [sort, setSort] = useState(null)
 
@@ -75,6 +86,27 @@ const Budgets = () => {
         }
     }
 
+    const handleUpdateBudget = async (budget_name, e) => {
+        if (e.key === "Enter") {
+            setIsEditingBudget(false)
+            await axios.put(`http://localhost:8080/main/budgets/update_budget/${budget_name}`, 
+                updateBudget, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }).then(response => {
+                alert(response.data.Message)
+                window.location.reload()
+            }).catch(error => {
+                alert(error.response?.data || error.message)
+            })      
+        }
+    }
+
+    const handleUpdateItem = async (budget_name, e) => {
+
+    }
+
     const handleRemoveBudget = async (budget_name) => {
         await axios.delete(`http://localhost:8080/main/budgets/remove_budget/${budget_name}`, {
             headers: {
@@ -119,7 +151,22 @@ const Budgets = () => {
                 {budgets !== null ? budgets.map((b, index) => (
                     <div key={index} className="py-5">
                             <div className="flex justify-around">
-                                <h1>{b.budget.budget_name}</h1>
+                                {isEditingBudget ? 
+                                <input 
+                                type="text"
+                                name="budget_name"
+                                placeholder="Budget Name..."
+                                value = {b.budget_name}
+                                onChange = {(e) => {setUpdateBudget({
+                                    budget: {
+                                        budget_name: e.target.value
+                                    }
+                                })}}
+                                onKeyDown={(e) => handleUpdateBudget(b.budget.budget_name, e)}
+                                className="py-2"
+                                required
+                                />
+                                : <h1 onClick={() => setIsEditingBudget(true)}>{b.budget.budget_name}</h1>}
                                 <div>
                                     <button className="px-2.5"
                                     onClick={() => handleRemoveBudget(b.budget.budget_name)}>Remove Budget</button>
@@ -142,6 +189,7 @@ const Budgets = () => {
                                   <td className="px-5">{bi.priority}</td>
                                   <td className="px-5">{bi.description}</td>
                                   <td>
+                                    <button></button>
                                     <button
                                     onClick={() => handleRemoveItem(b.budget.budget_name, bi.item_name)}
                                     ><FaMinus color="grey"/>

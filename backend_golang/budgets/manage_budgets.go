@@ -322,14 +322,18 @@ func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
-	fmt.Println(manageBudget.Budget.BudgetName)
 	// sql query to update budget in the database
 	update_budget, err := database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
 	budget_name = ? AND user_id = ?`, manageBudget.Budget.BudgetName, budget_name, user_id)
-	fmt.Println("$1 Rows affected", update_budget)
 	if err != nil {
 		log.Fatal(err)
 	}
+	rowsAffected, err := update_budget.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Rows affected: %d\n", rowsAffected)
 
 	// success message
 	response := Response{

@@ -16,11 +16,6 @@ type ManageBudgets struct {
 	BudgetItems []*BudgetItems `json:"budget_items"`
 }
 
-type ManageBudgetsNullItems struct {
-	Budget  Budget
-	Message string
-}
-
 type BudgetHandler struct{}
 
 type ErrorMessage struct {
