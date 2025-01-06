@@ -72,14 +72,15 @@ const Transactions = () => {
                         <th className="px-5">Date</th>
                     </tr>
                     {/* Array.isArray(b.budget_items) && b.budget_items[0] !== null ? */}
-                    {transactions.map((transaction, index) => (
+                    {Array.isArray(transactions) && transactions[0] !== null ? 
+                    transactions.map((transaction, index) => (
                     <tr key={index}>
                         <td className="px-5">{transaction.transaction_name}</td>
                         <td className="px-5">{transaction.transaction_type}</td>
                         <td className="px-5">{transaction.amount}</td>
                         <td className="px-5">{`${transaction.date.substring(0, 10)}`}</td>
                     </tr>
-                    ))}
+                    )): <div>There are no transactions for this budget item</div>}
                 </table>             
             </div>
 
