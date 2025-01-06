@@ -2,21 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* .webpage {
-    background-color: #043353;
+input {
+    background-color: #f4f4f4;
+    padding: 3px;
+    border-radius: 10px;
 }
-
-h1 {
-    color: white;
-}
-button {
-    color: white;
-}
-
-th {
-    color: white;
-}
-
-td {
-    color: white;
-} */

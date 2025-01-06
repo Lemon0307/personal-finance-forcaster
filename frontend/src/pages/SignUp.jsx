@@ -80,7 +80,7 @@ const SignUp = () => {
             placeholder="Username"
             value={details.username}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -89,7 +89,7 @@ const SignUp = () => {
             placeholder="Email"
             value={details.email}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -98,7 +98,7 @@ const SignUp = () => {
             placeholder="Password"
             value={details.password}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -107,7 +107,7 @@ const SignUp = () => {
             placeholder="Confirm Password"
             value={details.confirm_password}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -116,7 +116,7 @@ const SignUp = () => {
             placeholder="Forename"
             value={details.forename}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -125,7 +125,7 @@ const SignUp = () => {
             placeholder="Surname"
             value={details.surname}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -134,7 +134,7 @@ const SignUp = () => {
             placeholder="Date of Birth"
             value={details.dob}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <textarea
@@ -142,7 +142,7 @@ const SignUp = () => {
             placeholder="Address"
             value={details.address}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -151,14 +151,14 @@ const SignUp = () => {
             placeholder="Current Balance"
             value={details.current_balance}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
         </div>
               <div className="grid place-items-center">
           <h2>Security Questions</h2>
           {securityQuestions.map((sq, index) => (
-            <div key={index} className="p-2">
+            <div key={index} className="p-2 my-2">
               <select
                 value={sq.question}
                 onChange={(e) =>

@@ -358,6 +358,7 @@ func (budget *BudgetHandler) UpdateBudgetItems(w http.ResponseWriter, r *http.Re
 	}
 
 	var budget_item BudgetItems
+	fmt.Println(budget_item)
 	_ = json.NewDecoder(r.Body).Decode(&budget_item)
 
 	// building query string

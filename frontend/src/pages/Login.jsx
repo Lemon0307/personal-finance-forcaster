@@ -75,7 +75,7 @@ const Login = () => {
             placeholder="Username"
             value={details.username}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -84,7 +84,7 @@ const Login = () => {
             placeholder="Email"
             value={details.email}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
           />
           <input
@@ -93,14 +93,14 @@ const Login = () => {
             placeholder="Password"
             value={details.password}
             onChange={handleDetailsChange}
-            className="py-2"
+            className="py-2 my-2"
             required
             />
         </div>
         <div className="grid place-items-center">
           <h2>Security Questions</h2>
           {securityQuestions.map((sq, index) => (
-            <div key={index} className="p-2">
+            <div key={index} className="py-2 my-2">
               <select
                 value={sq.question}
                 onChange={(e) =>

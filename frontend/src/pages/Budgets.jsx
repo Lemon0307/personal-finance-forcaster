@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { UNSAFE_useFogOFWarDiscovery, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { FaPlus, FaMinus, FaTimes } from "react-icons/fa";
 import axios from "axios"
 
@@ -16,10 +16,7 @@ const Budgets = () => {
         budget: {budget_name: ""}
     })
     const [updateItem, setUpdateItem] = useState({
-        item_name: "",
-        budget_cost: 0.00,
-        description: "",
-        priority: 0.00
+
     })
     const [isEditingBudget, setIsEditingBudget] = useState(false)
     const [isEditingItem, setIsEditingItem] = useState(false)
@@ -106,8 +103,29 @@ const Budgets = () => {
         }
     }
 
-    const handleUpdateItem = async (budget_name, e) => {
+    const handleUpdateItem = async (budget_name, item_name) => {
+        updateItem.budget_cost = parseFloat(updateItem.budget_cost)
+        updateItem.priority = parseInt(updateItem.priority)
+        console.log(JSON.stringify(updateItem))
+        await axios.put(`http://localhost:8080/main/budgets/update_budget_item/${budget_name}/${item_name}`,
+            updateItem, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        ).then(response => {
+            window.location.reload()
+        }).catch(error => {
+            alert(error.response?.data || error.message)
+        })
+    }
 
+    const handleUpdateItemChange = (e) => {
+        const {name, value} = e.target
+        setUpdateItem(previousItem => ({
+            ...previousItem,
+            [name]: value
+        }))
     }
 
     const handleRemoveBudget = async (budget_name) => {
@@ -205,8 +223,12 @@ const Budgets = () => {
                                     {isEditingItem ? 
                                         <div className="grid">
                                             <td className="px-5">
-                                                <input type="number" name="budget_cost" placeholder="Amount..." required 
-                                                onChange={handleBudgetItemChange}/>
+                                                <input type="number" 
+                                                name="budget_cost" 
+                                                placeholder="Amount..." 
+                                                required 
+                                                value={updateItem.budget_cost}
+                                                onChange={(e) => handleUpdateItemChange(e)}/>
                                             </td>
                                             <td className="px-5">
                                                 <input 
@@ -215,18 +237,27 @@ const Budgets = () => {
                                                 max="10"
                                                 step="1"
                                                 name="priority"
-                                                onChange={(e) => handleBudgetItemChange(e, index)}
+                                                value={updateItem.priority}
+                                                onChange={(e) => handleUpdateItemChange(e)}
                                                 className="py-2"
                                                 required
                                                 />
                                             </td>
                                             <td className="px-5">
-                                                <input type="text" name="description" placeholder="Description..." required 
-                                                onChange={handleBudgetItemChange}/>
+                                                <input type="text" 
+                                                name="description" 
+                                                value={updateItem.description}
+                                                placeholder="Description..." 
+                                                required 
+                                                onChange={(e) => handleUpdateItemChange(e)}/>
                                             </td>
-                                            <td>
+                                            <td className="flex justify-evenly my-2">
                                                 <button onClick={() => setIsEditingItem(false)}>
                                                     <FaTimes />
+                                                </button>
+                                                <button onClick={(e) => 
+                                                    handleUpdateItem(b.budget.budget_name, bi.item_name, e)}>
+                                                    <FaPlus />
                                                 </button>
                                             </td>
                                         </div>                                   
