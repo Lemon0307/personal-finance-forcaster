@@ -1,7 +1,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 input {
     background-color: #f4f4f4;
     padding: 3px;

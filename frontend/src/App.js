@@ -14,7 +14,7 @@ function App() {
           <Route path="/budgets" element={<Budgets />} />
           <Route path="/budgets/add-budget" element={<AddBudget />} />
           <Route path="/budgets/update-budget" element={<UpdateBudget />}/>
-          <Route path="/transactions/:item_name" element={<Transactions />} />
+          <Route path="/transactions/:budget_name/:item_name" element={<Transactions />} />
           <Route path="/forecast" element={<Forecast />} />
         </Routes>
       </Router>

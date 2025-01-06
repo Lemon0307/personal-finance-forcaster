@@ -19,7 +19,7 @@ const Budgets = () => {
 
     })
     const [isEditingBudget, setIsEditingBudget] = useState(false)
-    const [isEditingItem, setIsEditingItem] = useState(false)
+    const [editingItem, setEditingItem] = useState({ budgetIndex: null, itemIndex: null });
     const token = localStorage.getItem('token')
     const [sort, setSort] = useState(null)
 
@@ -167,8 +167,8 @@ const Budgets = () => {
             </div>
             <div className="grid place-content-center">
                 <h1>My Budgets</h1>
-                {budgets !== null ? budgets.map((b, index) => (
-                    <div key={index} className="py-5">
+                {budgets !== null ? budgets.map((b, indexB) => (
+                    <div key={indexB} className="py-5">
                             <div className="flex justify-around">
                                 {isEditingBudget ? 
                                 <input 
@@ -191,17 +191,17 @@ const Budgets = () => {
                                     onClick={() => handleRemoveBudget(b.budget.budget_name)}>Remove Budget</button>
                                 </div>
                             </div>
-                        <div key={index} className="flex justify-normal">
+                        <div key={indexB} className="flex justify-normal">
                             <table>
                             <tr>
                                 <th className="px-5">Item</th>
-                                <th className="px-5">Amount</th>
+                                <th className="px-5">Amount (£)</th>
                                 <th className="px-5">Priority</th>
                                 <th className="px-5">Description</th>
                             </tr>
                             {Array.isArray(b.budget_items) && b.budget_items[0] !== null ?
-                             b.budget_items.map((bi, index) => (
-                                <tr key={index}>
+                             b.budget_items.map((bi, indexBI) => (
+                                <tr key={indexBI}>
                                     <td className="px-5">{bi.item_name}</td>
                                     <td className="px-5">£{bi.budget_cost}</td>
                                     <td className="px-5">{bi.priority}</td>
@@ -213,14 +213,17 @@ const Budgets = () => {
                                         </button>
                                     </td>
                                     <td>
-                                        <button onClick={() => setIsEditingItem(true)} className="px-5">Update Item</button>
+                                        <button onClick={() => setEditingItem({ budgetIndex: indexB, itemIndex: 
+                                        indexBI })} 
+                                         className="px-5">Update Item</button>
                                     </td>
                                     <td>
-                                        <button onClick={(e) => {e.preventDefault(); redirect(`/transactions/${bi.item_name}`)}}>
+                                        <button onClick={(e) => {e.preventDefault(); redirect(
+                                            `/transactions/${b.budget.budget_name}/${bi.item_name}`)}}>
                                             View Transactions
                                         </button>
                                     </td>
-                                    {isEditingItem ? 
+                                    {editingItem.budgetIndex === indexB && editingItem.itemIndex === indexBI ? 
                                         <div className="grid">
                                             <td className="px-5">
                                                 <input type="number" 
@@ -252,7 +255,7 @@ const Budgets = () => {
                                                 onChange={(e) => handleUpdateItemChange(e)}/>
                                             </td>
                                             <td className="flex justify-evenly my-2">
-                                                <button onClick={() => setIsEditingItem(false)}>
+                                                <button onClick={() => setEditingItem({ budgetIndex: null, itemIndex: null })}>
                                                     <FaTimes />
                                                 </button>
                                                 <button onClick={(e) => 
@@ -266,25 +269,41 @@ const Budgets = () => {
                             )) : null}
                             <tr>
                                 <td className="px-5" >
-                                    <input type="text" name="item_name" placeholder="Item name..." required onChange={handleBudgetItemChange}/>
+                                    <input type="text" 
+                                    name="item_name" 
+                                    placeholder="Item name..." 
+                                    required 
+                                    value={budgetItem.item_name}
+                                    onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td className="px-5">
-                                    <input type="number" name="budget_cost" placeholder="Amount..." required onChange={handleBudgetItemChange}/>
+                                    <input type="number" 
+                                    name="budget_cost" 
+                                    placeholder="Amount..." 
+                                    required
+                                    value={budgetItem.budget_cost} 
+                                    onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td className="px-5">
                                 <input 
                                 type="range"
                                 min="1"
                                 max="10"
+                                value={budgetItem.priority}
                                 step="1"
                                 name="priority"
-                                onChange={(e) => handleBudgetItemChange(e, index)}
+                                onChange={(e) => handleBudgetItemChange(e)}
                                 className="py-2"
                                 required
                                 />
                                 </td>
                                 <td className="px-5">
-                                    <input type="text" name="description" placeholder="Description..." required onChange={handleBudgetItemChange}/>
+                                    <input type="text" 
+                                    name="description" 
+                                    placeholder="Description..." 
+                                    required 
+                                    value={budgetItem.description}
+                                    onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td>
                                     <button onClick={() => handleSubmit(b.budget.budget_name)}>
