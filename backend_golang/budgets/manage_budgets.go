@@ -162,18 +162,17 @@ func (budget *BudgetHandler) AddBudgetItem(w http.ResponseWriter, r *http.Reques
 
 func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	var err error
-	// extracts user_id from jwt (performed in jwt middleware)
 	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
 	if !ok {
 		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
 		return
 	}
 
-	// query all budgets and its budget items (modified join to left join)
+	// Query to get budgets with associated items
 	rows, err := database.DB.Query(`
         SELECT budget.user_id, budget.budget_name, 
                budget_items.item_name, budget_items.budget_cost, 
-			   budget_items.description, budget_items.priority
+               budget_items.description, budget_items.priority
         FROM Budget budget
         LEFT JOIN Budget_Items budget_items
         ON budget.user_id = budget_items.user_id AND budget.budget_name = budget_items.budget_name
@@ -181,49 +180,62 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// make a hash map to group budget with its budget items
+
 	var budgets = make(map[string]*ManageBudgets)
 
 	for rows.Next() {
-		// add one row of budgets into structs
 		var user_id string
 		var budget Budget
 		var budget_item BudgetItems
-		if err := rows.Scan(&user_id, &budget.BudgetName, &budget_item.ItemName,
-			&budget_item.BudgetCost, &budget_item.Description, &budget_item.Priority); err != nil {
+		// handle budget items and their possible null values
+		var itemName sql.NullString
+		var budgetCost sql.NullFloat64
+		var description sql.NullString
+		var priority sql.NullInt32
+
+		// Scan values from the query result
+		if err := rows.Scan(&user_id, &budget.BudgetName, &itemName,
+			&budgetCost, &description, &priority); err != nil {
 			log.Fatal(err)
 		}
-		// add budget to the hash map if budget doesn't exist in the hash map
+
+		// Check if this budget has already been processed
 		if _, budget_exists := budgets[budget.BudgetName]; !budget_exists {
 			budgets[budget.BudgetName] = &ManageBudgets{
 				Budget: Budget{
 					BudgetName: budget.BudgetName,
 				},
-				BudgetItems: []BudgetItems{},
+				BudgetItems: []*BudgetItems{},
 			}
 		}
-		// group all budget items into one budget
-		if budget_item.ItemName != "" {
-			budgets[budget.BudgetName].BudgetItems = append(budgets[budget.BudgetName].BudgetItems, BudgetItems{
+
+		// check if any value in the budget item is null
+		if !itemName.Valid || !budgetCost.Valid || !description.Valid || !priority.Valid {
+			// append a null value into budget items
+			budgets[budget.BudgetName].BudgetItems = append(budgets[budget.BudgetName].BudgetItems, nil)
+		} else {
+			// set variables to corresponding budget item values
+			budget_item.ItemName = itemName.String
+			budget_item.BudgetCost = budgetCost.Float64
+			budget_item.Description = description.String
+			budget_item.Priority = priority.Int32
+			// append the object to the budget items array
+			budgets[budget.BudgetName].BudgetItems = append(budgets[budget.BudgetName].BudgetItems, &BudgetItems{
 				ItemName:    budget_item.ItemName,
 				BudgetCost:  budget_item.BudgetCost,
 				Description: budget_item.Description,
 				Priority:    budget_item.Priority,
 			})
 		}
-
-		if err := rows.Err(); err != nil {
-			log.Fatal(err)
-		}
 	}
 
-	// group all budgets into an array of budgets
+	// Convert map to an array of ManageBudgets
 	var budgets_array []ManageBudgets
 	for _, budget := range budgets {
 		budgets_array = append(budgets_array, *budget)
 	}
 
-	fmt.Println(budgets_array)
+	// Send the response
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(budgets_array)
 }

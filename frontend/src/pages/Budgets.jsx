@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaMinus } from "react-icons/fa";
 import axios from "axios"
 
 const Budgets = () => {
@@ -22,6 +22,7 @@ const Budgets = () => {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
+                console.log(response.data)
                 setBudgets(response?.data)
             }).catch(error => {
                 alert(error.response?.data || error.message)
@@ -44,21 +45,58 @@ const Budgets = () => {
     }
 
     const handleSubmit = async (budget_name) => {
-        console.log(budgetItem)
-        budgetItem.priority = parseFloat(budgetItem.priority)
-        budgetItem.budget_cost = parseFloat(budgetItem.budget_cost)
-        console.log(typeof(budgetItem.budget_cost))
-        await axios.post(`http://localhost:8080/main/budgets/add_budget_item/${budget_name}`, budgetItem, {
+        let ok = true;
+        for (const key in budgetItem) {
+            if (typeof(budgetItem[key]) === "string" && 
+                budgetItem[key].trim().length === 0) {
+                    ok = false;
+            }
+        }
+
+        if (!ok) {
+            alert("Please fill in all the required details.")
+        } else {
+            budgetItem.priority = parseFloat(budgetItem.priority)
+            budgetItem.budget_cost = parseFloat(budgetItem.budget_cost)
+
+            console.log(typeof(budgetItem.budget_cost))
+            await axios.post(`http://localhost:8080/main/budgets/add_budget_item/${budget_name}`, budgetItem, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }).then(
+                response => {
+                    alert(response.data.Message)
+                    window.location.reload();
+                }
+            ).catch(error => {
+                alert(error.response?.data || error.message)
+            })            
+        }
+    }
+
+    const handleRemoveBudget = async (budget_name) => {
+        await axios.delete(`http://localhost:8080/main/budgets/remove_budget/${budget_name}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
-        }).then(
-            response => {
-                alert(response.data.Message)
-                window.location.reload();
+        }).then(response => {
+            alert(response.data.Message)
+            window.location.reload();
+        }).catch(error => {
+            alert(error.response?.data || error.message)
+        })
+    }
+
+    const handleRemoveItem = async (budget_name, item_name) => {
+        await axios.delete(`http://localhost:8080/main/budgets/remove_budget_item/${budget_name}/${item_name}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
-        ).catch(error => {
-            alert(error.response.data)
+        }).then(response => {
+            window.location.reload();
+        }).catch(error => {
+            alert(error.response?.data || error.message)
         })
     }
 
@@ -78,13 +116,13 @@ const Budgets = () => {
                 <h1>My Budgets</h1>
             </div>
             <div className="grid place-content-center">
-                {budgets.map((b, index) => (
+                {budgets !== null ? budgets.map((b, index) => (
                     <div key={index} className="py-5">
                             <div className="flex justify-around">
                                 <h1>{b.budget.budget_name}</h1>
                                 <div>
-                                    <button className="px-2.5">Update Budget</button>
-                                    <button className="px-2.5">Remove Budget</button>
+                                    <button className="px-2.5"
+                                    onClick={() => handleRemoveBudget(b.budget.budget_name)}>Remove Budget</button>
                                 </div>
                             </div>
                         <tbody>
@@ -96,14 +134,21 @@ const Budgets = () => {
                                 <th className="px-5">Priority</th>
                                 <th className="px-5">Description</th>
                             </tr>
-                            {b.budget_items.map((bi, index) => (
+                            {Array.isArray(b.budget_items) && b.budget_items[0] !== null ?
+                             b.budget_items.map((bi, index) => (
                                 <tr key={index}>
                                   <td className="px-5">{bi.item_name}</td>
-                                  <td className="px-5">{bi.budget_cost}</td>
+                                  <td className="px-5">£{bi.budget_cost}</td>
                                   <td className="px-5">{bi.priority}</td>
                                   <td className="px-5">{bi.description}</td>
+                                  <td>
+                                    <button
+                                    onClick={() => handleRemoveItem(b.budget.budget_name, bi.item_name)}
+                                    ><FaMinus color="grey"/>
+                                    </button>
+                                  </td>
                                 </tr>
-                            ))}
+                            )) : <div></div>}
                             <tr>
                                 <td className="px-5" >
                                     <input type="text" name="item_name" placeholder="Item name..." required onChange={handleBudgetItemChange}/>
@@ -118,7 +163,7 @@ const Budgets = () => {
                                     <textarea type="text" name="description" placeholder="Description..." required onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td>
-                                    <button onClick={() => (handleSubmit(b.budget.budget_name))}>
+                                    <button onClick={() => handleSubmit(b.budget.budget_name)}>
                                         <FaPlus color="grey"/>    
                                     </button>
                                 </td>
@@ -127,7 +172,7 @@ const Budgets = () => {
                         </div>
                         </tbody>
                     </div>
-                ))}
+                )) : (<h1>You have not made any budgets yet, add a budget!</h1>)}
             </div>
         </div>
     )

@@ -1,10 +1,12 @@
 import { useState } from "react";
-import axios from "axios"
+import axios from "axios";
 import { FaMinus } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 
 const AddBudget = () => {
     
+    const redirect = useNavigate();
     const [budget, setBudget] = useState({budget_name: ""})
     const token = localStorage.getItem("token")
     const [items, setItems] = useState([{
@@ -24,6 +26,7 @@ const AddBudget = () => {
             }
         }).then(response => {
             alert(response.data.Message)
+            redirect('/budgets')
         }).catch(error => {
             alert(error.response?.data || error.message);
         })
@@ -123,6 +126,7 @@ const AddBudget = () => {
             ))}
             <button onClick={addItem}>Add another item</button>
             <button onClick={handleSubmit}>Create Budget</button>
+            <button onClick={(e) => {e.preventDefault();redirect('/budgets')}}>Back to my budget</button>
         </div>
     )
 }
