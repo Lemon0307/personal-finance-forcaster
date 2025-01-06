@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { FaPlus, FaMinus } from "react-icons/fa";
+import { UNSAFE_useFogOFWarDiscovery, useNavigate } from "react-router-dom";
+import { FaPlus, FaMinus, FaTimes } from "react-icons/fa";
 import axios from "axios"
 
 const Budgets = () => {
@@ -27,6 +27,9 @@ const Budgets = () => {
     const [sort, setSort] = useState(null)
 
     useEffect(() => {
+        if (token === null) {
+            redirect('/login')
+        }
         const getBudgets = async () => {
             await axios.get("http://localhost:8080/main/budgets", {
                 headers: {
@@ -40,7 +43,7 @@ const Budgets = () => {
             })
         }
         getBudgets()
-    }, [token])
+    }, [token, redirect])
     console.log(budgets)
 
     const handleBudgetItemChange = (e) => {
@@ -144,10 +147,8 @@ const Budgets = () => {
                     <option value="description">Description</option>
                 </select>
             </div>
-            <div className="flex justify-evenly">
-                <h1>My Budgets</h1>
-            </div>
             <div className="grid place-content-center">
+                <h1>My Budgets</h1>
                 {budgets !== null ? budgets.map((b, index) => (
                     <div key={index} className="py-5">
                             <div className="flex justify-around">
@@ -172,7 +173,6 @@ const Budgets = () => {
                                     onClick={() => handleRemoveBudget(b.budget.budget_name)}>Remove Budget</button>
                                 </div>
                             </div>
-                        <tbody>
                         <div key={index} className="flex justify-normal">
                             <table>
                             <tr>
@@ -184,19 +184,55 @@ const Budgets = () => {
                             {Array.isArray(b.budget_items) && b.budget_items[0] !== null ?
                              b.budget_items.map((bi, index) => (
                                 <tr key={index}>
-                                  <td className="px-5">{bi.item_name}</td>
-                                  <td className="px-5">£{bi.budget_cost}</td>
-                                  <td className="px-5">{bi.priority}</td>
-                                  <td className="px-5">{bi.description}</td>
-                                  <td>
-                                    <button></button>
-                                    <button
-                                    onClick={() => handleRemoveItem(b.budget.budget_name, bi.item_name)}
-                                    ><FaMinus color="grey"/>
-                                    </button>
-                                  </td>
-                                </tr>
-                            )) : <div></div>}
+                                    <td className="px-5">{bi.item_name}</td>
+                                    <td className="px-5">£{bi.budget_cost}</td>
+                                    <td className="px-5">{bi.priority}</td>
+                                    <td className="px-5">{bi.description}</td>
+                                    <td>
+                                        <button
+                                        onClick={() => handleRemoveItem(b.budget.budget_name, bi.item_name)}
+                                        ><FaMinus color="grey"/>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <button onClick={() => setIsEditingItem(true)} className="px-5">Update Item</button>
+                                    </td>
+                                    <td>
+                                        <button onClick={(e) => {e.preventDefault(); redirect(`/transactions/${bi.item_name}`)}}>
+                                            View Transactions
+                                        </button>
+                                    </td>
+                                    {isEditingItem ? 
+                                        <div className="grid">
+                                            <td className="px-5">
+                                                <input type="number" name="budget_cost" placeholder="Amount..." required 
+                                                onChange={handleBudgetItemChange}/>
+                                            </td>
+                                            <td className="px-5">
+                                                <input 
+                                                type="range"
+                                                min="1"
+                                                max="10"
+                                                step="1"
+                                                name="priority"
+                                                onChange={(e) => handleBudgetItemChange(e, index)}
+                                                className="py-2"
+                                                required
+                                                />
+                                            </td>
+                                            <td className="px-5">
+                                                <input type="text" name="description" placeholder="Description..." required 
+                                                onChange={handleBudgetItemChange}/>
+                                            </td>
+                                            <td>
+                                                <button onClick={() => setIsEditingItem(false)}>
+                                                    <FaTimes />
+                                                </button>
+                                            </td>
+                                        </div>                                   
+                                    : null}
+                                </tr>                                
+                            )) : null}
                             <tr>
                                 <td className="px-5" >
                                     <input type="text" name="item_name" placeholder="Item name..." required onChange={handleBudgetItemChange}/>
@@ -205,10 +241,19 @@ const Budgets = () => {
                                     <input type="number" name="budget_cost" placeholder="Amount..." required onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td className="px-5">
-                                    <input type="number" name="priority" placeholder="Priority..." required onChange={handleBudgetItemChange}/>
+                                <input 
+                                type="range"
+                                min="1"
+                                max="10"
+                                step="1"
+                                name="priority"
+                                onChange={(e) => handleBudgetItemChange(e, index)}
+                                className="py-2"
+                                required
+                                />
                                 </td>
                                 <td className="px-5">
-                                    <textarea type="text" name="description" placeholder="Description..." required onChange={handleBudgetItemChange}/>
+                                    <input type="text" name="description" placeholder="Description..." required onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td>
                                     <button onClick={() => handleSubmit(b.budget.budget_name)}>
@@ -218,7 +263,6 @@ const Budgets = () => {
                             </tr>         
                             </table>
                         </div>
-                        </tbody>
                     </div>
                 )) : (<h1>You have not made any budgets yet, add a budget!</h1>)}
             </div>

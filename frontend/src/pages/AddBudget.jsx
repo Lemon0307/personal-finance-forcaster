@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaMinus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,12 @@ const AddBudget = () => {
             description: "",
             priority: 0.00
     },])
+
+    useEffect(() => {
+        if (token === null) {
+            redirect('/login')
+        }
+    }, [token, redirect])
 
     const handleSubmit = async () => {
         const details = {budget: budget, budget_items: items}
@@ -101,15 +107,19 @@ const AddBudget = () => {
                     className="py-2"
                     required
                     />
-                    <input 
-                    type="number"
-                    name="budget_cost"
-                    placeholder="Budget Amount..."
-                    value={item.budget_cost}
-                    onChange={(e) => handleItemChange(e, index)}
-                    className="py-2"
-                    required
-                    />
+                    <div className="flex items-center">
+                        <h1 className="px-2">£</h1>
+                        <input 
+                        type="number"
+                        name="budget_cost"
+                        placeholder="Budget Amount..."
+                        value={item.budget_cost}
+                        onChange={(e) => handleItemChange(e, index)}
+                        className="p-2"
+                        required
+                        />                        
+                    </div>
+
                     <h1>Priority</h1>
                     <input 
                     type="range"
