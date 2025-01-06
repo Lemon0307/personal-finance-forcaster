@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FaPlus } from "react-icons/fa";
 import axios from "axios"
 
 const Budgets = () => {
-
+    const redirect = useNavigate()
     const [budgets, setBudgets] = useState([])
     const [budgetItem, setBudgetItem] = useState({
         item_name: "",
@@ -64,7 +65,7 @@ const Budgets = () => {
     return (
         <div className="p-20 flex">
             <div className="px-10">
-                <button>Add Budget</button>
+                <button onClick={(e) => {e.preventDefault(); redirect("/budgets/add-budget")}}>Add Budget</button>
                 <h1>Sort by:</h1>
                 <select value={sort} onChange={handleSort}>
                     <option value="item">Item</option>
@@ -105,16 +106,16 @@ const Budgets = () => {
                             ))}
                             <tr>
                                 <td className="px-5" >
-                                    <input type="text" name="item_name" placeholder="Item name..." onChange={handleBudgetItemChange}/>
+                                    <input type="text" name="item_name" placeholder="Item name..." required onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td className="px-5">
-                                    <input type="number" name="budget_cost" placeholder="Amount..." onChange={handleBudgetItemChange}/>
+                                    <input type="number" name="budget_cost" placeholder="Amount..." required onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td className="px-5">
-                                    <input type="number" name="priority" placeholder="Priority..." onChange={handleBudgetItemChange}/>
+                                    <input type="number" name="priority" placeholder="Priority..." required onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td className="px-5">
-                                    <input type="text" name="description" placeholder="Description..." onChange={handleBudgetItemChange}/>
+                                    <textarea type="text" name="description" placeholder="Description..." required onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td>
                                     <button onClick={() => (handleSubmit(b.budget.budget_name))}>

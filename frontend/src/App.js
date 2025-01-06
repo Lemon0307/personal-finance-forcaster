@@ -4,7 +4,7 @@ import {Navbar} from './components';
 
 function App() {
   return (
-    <div className="p-10">
+    <div className="p-10 webpage">
       <Router>
         <Navbar />
         <Routes>

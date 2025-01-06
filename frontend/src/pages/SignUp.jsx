@@ -81,6 +81,7 @@ const SignUp = () => {
             value={details.username}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="email"
@@ -89,6 +90,7 @@ const SignUp = () => {
             value={details.email}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="password"
@@ -97,6 +99,7 @@ const SignUp = () => {
             value={details.password}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="password"
@@ -105,6 +108,7 @@ const SignUp = () => {
             value={details.confirm_password}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="text"
@@ -113,6 +117,7 @@ const SignUp = () => {
             value={details.forename}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="text"
@@ -121,6 +126,7 @@ const SignUp = () => {
             value={details.surname}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="date"
@@ -129,6 +135,7 @@ const SignUp = () => {
             value={details.dob}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <textarea
             name="address"
@@ -136,6 +143,7 @@ const SignUp = () => {
             value={details.address}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="number"
@@ -144,6 +152,7 @@ const SignUp = () => {
             value={details.current_balance}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
         </div>
               <div className="grid place-items-center">
@@ -172,6 +181,7 @@ const SignUp = () => {
                 onChange={(e) =>
                   handleSecurityQuestionChange(index, "answer", e.target.value)
                 }
+                required
               />
             </div>
           ))}

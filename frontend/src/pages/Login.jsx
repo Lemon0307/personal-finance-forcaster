@@ -76,6 +76,7 @@ const Login = () => {
             value={details.username}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="email"
@@ -84,6 +85,7 @@ const Login = () => {
             value={details.email}
             onChange={handleDetailsChange}
             className="py-2"
+            required
           />
           <input
             type="password"
@@ -92,6 +94,7 @@ const Login = () => {
             value={details.password}
             onChange={handleDetailsChange}
             className="py-2"
+            required
             />
         </div>
         <div className="grid place-items-center">
@@ -120,6 +123,7 @@ const Login = () => {
                 onChange={(e) =>
                   handleSecurityQuestionChange(index, "answer", e.target.value)
                 }
+                required
               />
             </div>
           ))}
