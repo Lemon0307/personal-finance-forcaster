@@ -8,24 +8,30 @@ const Transactions = () => {
     const [sort, setSort] = useState()
     const {item_name, budget_name} = useParams()
     const [transactions, setTransactions] = useState([
-            {
-                transaction_id: "",
-                transaction_name: "",
-                transaction_type: "",
-                amount: 0.00,
-                date: ""
-            }
-        ])
-    const [addTransaction, setAddTransaction] = useState({
-        transaction_id: "",
+        {
+            transaction_id: "",
+            transaction_name: "",
+            transaction_type: "",
+            amount: 0.00,
+            date: ""
+        }
+    ])
+
+    const [newTransaction, setNewTransaction] = useState({
         transaction_name: "",
         transaction_type: "",
         amount: 0.00,
-        date: "",
-        month: 0,
-        year: 0
+        date: ""
     })
-    const [date, setDate] = useState(new Date())
+
+    const [date, setDate] = useState({
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+    })
+    const [dateString, setDateString] = useState(() => {
+        const date_now = new Date()
+        return `${date_now.getFullYear()}-${String(date_now.getMonth() + 1).padStart(2, "0")}`
+    })
     const token = localStorage.getItem("token")
 
     useEffect(() => {
@@ -33,12 +39,13 @@ const Transactions = () => {
             redirect('/login')
         }
         const getTransactions = async () => {
-            await axios.get(`http://localhost:8080/main/transactions/${budget_name}/${item_name}/${date.getFullYear()}/${date.getMonth() + 1}`, {
+            await axios.get(`http://localhost:8080/main/transactions/${budget_name}/${item_name}/${date.year}/${date.month}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
                 setTransactions(response.data.transactions)
+                console.log(response.data.transactions)
             }).catch(error => {
                 alert(error.response?.data || error.message)
             })
@@ -48,11 +55,59 @@ const Transactions = () => {
     }, [redirect, token, budget_name, item_name, date])
 
     const handleTransactionChange = (e) => {
-        
+        const {name, value} = e.target
+        setNewTransaction(previousTransaction => ({
+            ...previousTransaction,
+            [name]: value
+        }))
     }
 
     const handleSubmit = async () => {
+        let ok = true
+        for (const key in newTransaction) {
+            if (typeof newTransaction[key] === "string" && newTransaction[key].trim().length === 0) {
+                ok = false;
+            }
+        }
 
+        if (!ok) {
+            alert("Please fill in all the required details.");
+            return;
+        }
+        const reqData = {
+            budget_item: {
+                budget_name: budget_name,
+                item_name: item_name
+            }, transactions: [{
+                    ...newTransaction,
+                    amount: parseFloat(newTransaction.amount)                           
+            }]
+        }
+        await axios.post("http://localhost:8080/main/transactions/add_transaction", reqData, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }).then(response => {
+            console.log(response.data.Message)
+            window.location.reload()
+        }).catch(error => {
+            alert(error.response?.data || error.message)
+        })
+    }
+
+    const handleRemoveTransaction = async (transaction_id) => {
+        console.log(transaction_id)
+        await axios.delete(`http://localhost:8080/main/transactions/${date.year}/${date.month}/${budget_name}/${item_name}/remove_transaction/${transaction_id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            console.log(response.data.Message)
+            window.location.reload()
+        }).catch(error => {
+            alert(error.response?.data || error.message)
+        })
     }
     
     const handleSort = (e) => {
@@ -60,6 +115,17 @@ const Transactions = () => {
         switch (sort) {
 
         }
+    }
+
+    const handleMonthYearChange = (e) => {
+        const date_string = e.target.value.split('-')
+        setDateString(e.target.value)
+        setDate(previousDate => ({
+            ...previousDate,
+            month: parseInt(date_string[1]),
+            year: parseInt(date_string[0])
+        }))
+
     }
 
     return (
@@ -78,8 +144,9 @@ const Transactions = () => {
                     <h1 className="px-5">My Transactions</h1>
                     <h1 className="px-5">Item: {item_name}</h1>
                     <h1 className="px-5">Budget: {budget_name}</h1>
-                    <h1 className="px-5">Month: {date.getMonth() + 1}</h1>
-                    <h1 className="px-5">Year: {date.getFullYear()}</h1>
+                    <input type="month" value={dateString} onChange={(e) => {
+                        handleMonthYearChange(e);
+                    }}/>
                 </div>
                 <table>
                     <tr>
@@ -88,7 +155,7 @@ const Transactions = () => {
                         <th className="px-5">Amount</th>
                         <th className="px-5">Date</th>
                     </tr>
-                    {/* Array.isArray(b.budget_items) && b.budget_items[0] !== null ? */}
+
                     {Array.isArray(transactions) && transactions[0] !== null ? 
                     transactions.map((transaction, index) => (
                     <tr key={index}>
@@ -96,31 +163,40 @@ const Transactions = () => {
                         <td className="px-5">{transaction.transaction_type}</td>
                         <td className="px-5">{transaction.amount}</td>
                         <td className="px-5">{`${transaction.date.substring(0, 10)}`}</td>
+                        <td>
+                        <button onClick={
+                            () => handleRemoveTransaction(transaction.transaction_id)}>
+                            <FaMinus color="grey"/>    
+                        </button>
+                    </td>
                     </tr>
                     )): <div>There are no transactions for this budget item</div>}
                     <tr>
                     <td className="px-5" >
                         <input type="text" 
                         name="transaction_name" 
-                        placeholder="Transaction name..." 
+                        placeholder="Name..." 
                         required 
-                        value={addTransaction.transaction_name}
+                        value={newTransaction.transaction_name}
                         onChange={(e) => handleTransactionChange(e)}/>
                     </td>
                     <td className="px-5" >
-                        <input type="text" 
-                        name="transaction_type" 
-                        placeholder="Transaction type..." 
-                        required 
-                        value={addTransaction.transaction_type}
-                        onChange={(e) => handleTransactionChange(e)}/>
+                        <select name="transaction_type" 
+                        onChange={(e) => {handleTransactionChange(e)}
+                        }
+                        className="p-2 border-r- bg-zinc-100"
+                        >
+                            <option value="" selected>Transaction type...</option>
+                            <option value="inflow">Inflow (+)</option>
+                            <option value="outflow">Outflow (-)</option>
+                        </select>
                     </td>
                     <td className="px-5" >
                         <input type="number" 
                         name="amount" 
                         placeholder="Amount..." 
                         required 
-                        value={addTransaction.amount}
+                        value={newTransaction.amount}
                         onChange={(e) => handleTransactionChange(e)}/>
                     </td>
                     <td className="px-5" >
@@ -128,7 +204,7 @@ const Transactions = () => {
                         name="date" 
                         placeholder="Date..." 
                         required 
-                        value={addTransaction.date}
+                        value={newTransaction.date}
                         onChange={(e) => handleTransactionChange(e)}/>
                     </td>
                     <td>
