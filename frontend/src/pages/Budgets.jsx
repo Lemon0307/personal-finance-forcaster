@@ -6,12 +6,6 @@ import axios from "axios"
 const Budgets = () => {
     const redirect = useNavigate()
     const [budgets, setBudgets] = useState([])
-    const [budgetItem, setBudgetItem] = useState({
-        item_name: "",
-        budget_cost: 0.00,
-        description: "",
-        priority: 0.00
-    })
     const [updateBudget, setUpdateBudget] = useState({
         budget: {budget_name: ""}
     })
@@ -33,19 +27,33 @@ const Budgets = () => {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
-                console.log(response.data)
-                setBudgets(response?.data)
+                setBudgets(response?.data.map((budget) => ({
+                    ...budget,
+                    new_item: { item_name: "", budget_cost: 0, description: "", priority: 0 },
+                })));
             }).catch(error => {
                 alert(error.response?.data || error.message)
             })
         }
         getBudgets()
     }, [token, redirect])
-    console.log(budgets)
 
-    const handleBudgetItemChange = (e) => {
+    const handleBudgetItemChange = (budget_index, e) => {
         const {name, value} = e.target
-        setBudgetItem({...budgetItem, [name]: value})
+
+        setBudgets((previous_budgets) =>
+            previous_budgets.map((budget, index) =>
+                index === budget_index
+                    ? {
+                          ...budget,
+                          new_item: {
+                              ...budget.new_item,
+                              [name]: value,
+                          },
+                      }
+                    : budget
+            )
+        );
     }
 
     const handleSort = (e) => {
@@ -55,35 +63,39 @@ const Budgets = () => {
         }
     }
 
-    const handleSubmit = async (budget_name) => {
+    const handleSubmit = async (budget_index) => {
+        const budget_to_add = budgets[budget_index]
+        
+        const { new_item } = budget_to_add;
         let ok = true;
-        for (const key in budgetItem) {
-            if (typeof(budgetItem[key]) === "string" && 
-                budgetItem[key].trim().length === 0) {
-                    ok = false;
+        for (const key in new_item) {
+            if (typeof new_item[key] === "string" && new_item[key].trim().length === 0) {
+                ok = false;
             }
         }
 
         if (!ok) {
-            alert("Please fill in all the required details.")
-        } else {
-            budgetItem.priority = parseFloat(budgetItem.priority)
-            budgetItem.budget_cost = parseFloat(budgetItem.budget_cost)
-
-            console.log(typeof(budgetItem.budget_cost))
-            await axios.post(`http://localhost:8080/main/budgets/add_budget_item/${budget_name}`, budgetItem, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }).then(
-                response => {
-                    alert(response.data.Message)
-                    window.location.reload();
-                }
-            ).catch(error => {
-                alert(error.response?.data || error.message)
-            })            
+            alert("Please fill in all the required details.");
+            return;
         }
+        const reqData = {
+            ...new_item,
+            budget_cost: parseFloat(new_item.budget_cost),
+            priority: parseFloat(new_item.priority)
+        }
+
+        await axios.post(`http://localhost:8080/main/budgets/add_budget_item/${new_item.budget_name}`, reqData, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }).then(
+            response => {
+                alert(response.data.Message)
+                window.location.reload();
+            }
+        ).catch(error => {
+            alert(error.response?.data || error.message)
+        })            
     }
 
     const handleUpdateBudget = async (budget_name, e) => {
@@ -273,26 +285,26 @@ const Budgets = () => {
                                     name="item_name" 
                                     placeholder="Item name..." 
                                     required 
-                                    value={budgetItem.item_name}
-                                    onChange={handleBudgetItemChange}/>
+                                    value={b.new_item.item_name}
+                                    onChange={(e) => handleBudgetItemChange(indexB, e)}/>
                                 </td>
                                 <td className="px-5">
                                     <input type="number" 
                                     name="budget_cost" 
                                     placeholder="Amount..." 
                                     required
-                                    value={budgetItem.budget_cost} 
-                                    onChange={handleBudgetItemChange}/>
+                                    value={b.new_item.budget_cost} 
+                                    onChange={(e) => handleBudgetItemChange(indexB, e)}/>
                                 </td>
                                 <td className="px-5">
                                 <input 
                                 type="range"
                                 min="1"
                                 max="10"
-                                value={budgetItem.priority}
+                                value={b.new_item.priority}
                                 step="1"
                                 name="priority"
-                                onChange={(e) => handleBudgetItemChange(e)}
+                                onChange={(e) => handleBudgetItemChange(indexB, e)}
                                 className="py-2"
                                 required
                                 />
@@ -302,7 +314,7 @@ const Budgets = () => {
                                     name="description" 
                                     placeholder="Description..." 
                                     required 
-                                    value={budgetItem.description}
+                                    value={b.new_item.description}
                                     onChange={handleBudgetItemChange}/>
                                 </td>
                                 <td>

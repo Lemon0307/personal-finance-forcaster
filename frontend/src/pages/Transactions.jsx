@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from "axios";
+import { FaPlus, FaMinus, FaTimes} from 'react-icons/fa'
 
 const Transactions = () => {
     const redirect = useNavigate()
@@ -15,7 +16,15 @@ const Transactions = () => {
                 date: ""
             }
         ])
-
+    const [addTransaction, setAddTransaction] = useState({
+        transaction_id: "",
+        transaction_name: "",
+        transaction_type: "",
+        amount: 0.00,
+        date: "",
+        month: 0,
+        year: 0
+    })
     const [date, setDate] = useState(new Date())
     const token = localStorage.getItem("token")
 
@@ -37,6 +46,14 @@ const Transactions = () => {
 
         getTransactions();
     }, [redirect, token, budget_name, item_name, date])
+
+    const handleTransactionChange = (e) => {
+        
+    }
+
+    const handleSubmit = async () => {
+
+    }
     
     const handleSort = (e) => {
         setSort(e.target.value)
@@ -81,6 +98,45 @@ const Transactions = () => {
                         <td className="px-5">{`${transaction.date.substring(0, 10)}`}</td>
                     </tr>
                     )): <div>There are no transactions for this budget item</div>}
+                    <tr>
+                    <td className="px-5" >
+                        <input type="text" 
+                        name="transaction_name" 
+                        placeholder="Transaction name..." 
+                        required 
+                        value={addTransaction.transaction_name}
+                        onChange={(e) => handleTransactionChange(e)}/>
+                    </td>
+                    <td className="px-5" >
+                        <input type="text" 
+                        name="transaction_type" 
+                        placeholder="Transaction type..." 
+                        required 
+                        value={addTransaction.transaction_type}
+                        onChange={(e) => handleTransactionChange(e)}/>
+                    </td>
+                    <td className="px-5" >
+                        <input type="number" 
+                        name="amount" 
+                        placeholder="Amount..." 
+                        required 
+                        value={addTransaction.amount}
+                        onChange={(e) => handleTransactionChange(e)}/>
+                    </td>
+                    <td className="px-5" >
+                        <input type="date" 
+                        name="date" 
+                        placeholder="Date..." 
+                        required 
+                        value={addTransaction.date}
+                        onChange={(e) => handleTransactionChange(e)}/>
+                    </td>
+                    <td>
+                        <button onClick={() => handleSubmit()}>
+                            <FaPlus color="grey"/>    
+                        </button>
+                    </td>
+                    </tr>
                 </table>             
             </div>
 
