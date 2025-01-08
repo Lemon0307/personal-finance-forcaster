@@ -39,6 +39,7 @@ const Transactions = () => {
             redirect('/login')
         }
         const getTransactions = async () => {
+            console.log(date)
             await axios.get(`http://localhost:8080/main/transactions/${budget_name}/${item_name}/${date.year}/${date.month}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -104,7 +105,7 @@ const Transactions = () => {
         })
         .then(response => {
             console.log(response.data.Message)
-            window.location.reload()
+            // window.location.reload()
         }).catch(error => {
             alert(error.response?.data || error.message)
         })
@@ -125,7 +126,6 @@ const Transactions = () => {
             month: parseInt(date_string[1]),
             year: parseInt(date_string[0])
         }))
-
     }
 
     return (
@@ -161,7 +161,7 @@ const Transactions = () => {
                     <tr key={index}>
                         <td className="px-5">{transaction.transaction_name}</td>
                         <td className="px-5">{transaction.transaction_type}</td>
-                        <td className="px-5">{transaction.amount}</td>
+                        <td className="px-5">£{transaction.amount}</td>
                         <td className="px-5">{`${transaction.date.substring(0, 10)}`}</td>
                         <td>
                         <button onClick={

@@ -63,10 +63,11 @@ const Budgets = () => {
         }
     }
 
-    const handleSubmit = async (budget_index) => {
+    const handleSubmit = async (budget_index, budget_name) => {
         const budget_to_add = budgets[budget_index]
         
         const { new_item } = budget_to_add;
+        new_item.budget_name = budget_name
         let ok = true;
         for (const key in new_item) {
             if (typeof new_item[key] === "string" && new_item[key].trim().length === 0) {
@@ -83,6 +84,7 @@ const Budgets = () => {
             budget_cost: parseFloat(new_item.budget_cost),
             priority: parseFloat(new_item.priority)
         }
+        console.log(reqData)
 
         await axios.post(`http://localhost:8080/main/budgets/add_budget_item/${new_item.budget_name}`, reqData, {
             headers: {
@@ -315,10 +317,10 @@ const Budgets = () => {
                                     placeholder="Description..." 
                                     required 
                                     value={b.new_item.description}
-                                    onChange={handleBudgetItemChange}/>
+                                    onChange={(e) => handleBudgetItemChange(indexB, e)}/>
                                 </td>
                                 <td>
-                                    <button onClick={() => handleSubmit(b.budget.budget_name)}>
+                                    <button onClick={() => handleSubmit(indexB, b.budget.budget_name)}>
                                         <FaPlus color="grey"/>    
                                     </button>
                                 </td>

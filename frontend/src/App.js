@@ -1,5 +1,5 @@
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
-import {Home, Forecast, Budgets, Login, SignUp, Transactions, AddBudget, UpdateBudget} from './pages';
+import {Home, Forecast, Budgets, Login, SignUp, Transactions, AddBudget, UpdateBudget} from './pages/index.js';
 import {Navbar} from './components';
 
 function App() {
