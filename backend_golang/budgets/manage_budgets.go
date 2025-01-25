@@ -61,17 +61,9 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 		// add all budget items
 		for i := 0; i < len(manageBudget.BudgetItems); i++ {
 			// check if budget item exists
-			var budget_item_exists bool
-			err = database.DB.QueryRow(`SELECT EXISTS(SELECT * FROM Budget_Items WHERE item_name = ? 
-			AND user_id = ? AND budget_name = ?)`, manageBudget.BudgetItems[i].ItemName, user_id,
-				manageBudget.Budget.BudgetName).Scan(&budget_item_exists)
 
-			fmt.Println(budget_item_exists)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			if !budget_item_exists {
+			if !ItemExists(database.DB, user_id, manageBudget.BudgetItems[i].ItemName,
+				 manageBudget.Budget.BudgetName) {
 				_, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
 				item_name, description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
 					user_id,

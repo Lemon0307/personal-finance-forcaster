@@ -121,6 +121,23 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 
 		// generate a transaction id for the transaction
 		manageTransactions.Transactions[0].TransactionID = GenerateTransactionID()
+
+		// add or subtract the current balance with transaction
+		switch manageTransactions.Transactions[0].TransactionType {
+		case "inflow":
+			_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance + ? 
+			WHERE user_id = ?`, manageTransactions.Transactions[0].Amount, user_id)
+			if err != nil {
+				log.Fatal(err)
+			}
+		case "outflow":
+			_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance - ? 
+			WHERE user_id = ?`, manageTransactions.Transactions[0].Amount, user_id)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
 		// add transaction data to the database
 		_, err = database.DB.Exec(`INSERT INTO Transactions (user_id, transaction_id, 
 		transaction_name, transaction_type, 
@@ -362,7 +379,31 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 	// check if transaction exists in the db
 	transaction_exists := TransactionExists(database.DB, transaction_id, user_id, month, year,
 		item_name, budget_name)
-		fmt.Println(transaction_exists)
+	fmt.Println(transaction_exists)
+
+	// get amount and transaction type from transactions
+	var t_type string
+	var t_amount float32
+
+	database.DB.QueryRow(`SELECT transaction_type, amount FROM Transactions 
+	WHERE user_id = ? AND transaction_id = ?`, user_id, transaction_id).Scan(&t_type, &t_amount)
+
+	// undos transaction addition/subtraction to current balance
+	switch t_type {
+	case "inflow":
+		_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance - ? 
+		WHERE user_id = ?`, t_amount, user_id)
+		if err != nil {
+			log.Fatal(err)
+		}
+	case "outflow":
+		_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance + ? 
+		WHERE user_id = ?`, t_amount, user_id)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	if transaction_exists {
 		// delete transaction
 		// checks if transaction belongs to the user
