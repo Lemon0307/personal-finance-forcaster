@@ -6,6 +6,7 @@ import (
 	"golang/budgets"
 	"golang/database"
 	"golang/forecast"
+	"golang/routes"
 	"golang/transactions"
 	"net/http"
 
@@ -23,13 +24,13 @@ func main() {
 	// jwt middleware
 	mainRouter := router.PathPrefix("/main").Subrouter()
 
-	auth.AuthenticationRoutes(router, &auth.AuthenticationHandler{})
+	routes.AuthenticationRoutes(router, &auth.AuthenticationHandler{})
 
 	mainRouter.Use(auth.JWTAuthMiddleware)
 
-	budgets.BudgetRoutes(mainRouter, &budgets.BudgetHandler{})
-	transactions.TransactionRoutes(mainRouter, &transactions.TransactionHandler{})
-	forecast.ForecastRoutes(mainRouter, &forecast.ForecastHandler{})
+	routes.BudgetRoutes(mainRouter, &budgets.BudgetHandler{})
+	routes.TransactionRoutes(mainRouter, &transactions.TransactionHandler{})
+	routes.ForecastRoutes(mainRouter, &forecast.ForecastHandler{})
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"http://localhost:3000"},
