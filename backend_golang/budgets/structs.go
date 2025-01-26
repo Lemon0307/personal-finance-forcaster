@@ -4,16 +4,16 @@ type Budget struct {
 	BudgetName string `json:"budget_name"`
 }
 
-type BudgetItems struct {
+type Items struct {
 	ItemName    string  `json:"item_name"`
 	BudgetCost  float64 `json:"budget_cost"`
 	Description string  `json:"description"`
 	Priority    int32   `json:"priority"`
 }
 
-type ManageBudgets struct {
-	Budget      Budget         `json:"budget"`
-	BudgetItems []*BudgetItems `json:"budget_items"`
+type B_Session struct {
+	Budget Budget   `json:"budget"`
+	Items  []*Items `json:"budget_items"`
 }
 
 type BudgetHandler struct{}

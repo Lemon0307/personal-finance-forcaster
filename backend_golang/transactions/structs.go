@@ -22,7 +22,7 @@ type MonthlyCosts struct {
 	Year  int `json:"year"`
 }
 
-type ManageTransactions struct {
+type T_Session struct {
 	BudgetItem   BudgetItem     `json:"budget_item"`
 	Transactions []Transactions `json:"transactions"`
 	MonthlyCosts MonthlyCosts   `json:"monthly_costs"`

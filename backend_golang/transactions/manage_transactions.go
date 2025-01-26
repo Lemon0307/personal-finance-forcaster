@@ -16,6 +16,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// controllers
+
 // generates transaction id
 func GenerateTransactionID() string {
 	res := uuid.New()
@@ -68,6 +70,10 @@ func TransactionExists(db *sql.DB, transaction_id, user_id string, month, year i
 	return res
 }
 
+// controllers
+
+// handlers
+
 func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *http.Request) {
 	var err error
 	// extracts user_id from jwt (performed in jwt middleware)
@@ -78,8 +84,8 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 	}
 
 	// decodes json into session
-	var manageTransactions ManageTransactions
-	err = json.NewDecoder(r.Body).Decode(&manageTransactions)
+	var session T_Session
+	err = json.NewDecoder(r.Body).Decode(&session)
 	if err != nil {
 		fmt.Print(err.Error())
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
@@ -87,11 +93,11 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 	}
 
 	// check if budget item exists
-	if budgets.ItemExists(database.DB, user_id, manageTransactions.BudgetItem.ItemName,
-		manageTransactions.BudgetItem.BudgetName) {
+	if budgets.ItemExists(database.DB, user_id, session.BudgetItem.ItemName,
+		session.BudgetItem.BudgetName) {
 		// extracts month and year from the date of transaction
-		month := MonthToInt(manageTransactions.Transactions[0].Date.Month().String())
-		year := manageTransactions.Transactions[0].Date.Year()
+		month := MonthToInt(session.Transactions[0].Date.Month().String())
+		year := session.Transactions[0].Date.Year()
 
 		var exists bool
 		// finds if a record of month and year exists in monthly costs table
@@ -99,7 +105,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		month = ? AND year = ? AND item_name = ? AND user_id = ?)`,
 			month,
 			year,
-			manageTransactions.BudgetItem.ItemName,
+			session.BudgetItem.ItemName,
 			user_id).Scan(&exists)
 		if err != nil {
 			log.Fatal(err)
@@ -110,8 +116,8 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 			_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, 
 			budget_name, month, year) VALUES (?, ?, ?, ?, ?)`,
 				user_id,
-				manageTransactions.BudgetItem.ItemName,
-				manageTransactions.BudgetItem.BudgetName,
+				session.BudgetItem.ItemName,
+				session.BudgetItem.BudgetName,
 				month,
 				year)
 			if err != nil {
@@ -120,19 +126,19 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		}
 
 		// generate a transaction id for the transaction
-		manageTransactions.Transactions[0].TransactionID = GenerateTransactionID()
+		session.Transactions[0].TransactionID = GenerateTransactionID()
 
 		// add or subtract the current balance with transaction
-		switch manageTransactions.Transactions[0].TransactionType {
+		switch session.Transactions[0].TransactionType {
 		case "inflow":
 			_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance + ? 
-			WHERE user_id = ?`, manageTransactions.Transactions[0].Amount, user_id)
+			WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
 			if err != nil {
 				log.Fatal(err)
 			}
 		case "outflow":
 			_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance - ? 
-			WHERE user_id = ?`, manageTransactions.Transactions[0].Amount, user_id)
+			WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -143,15 +149,15 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		transaction_name, transaction_type, 
 		amount, date, month, year, item_name, budget_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			user_id,
-			manageTransactions.Transactions[0].TransactionID,
-			manageTransactions.Transactions[0].TransactionName,
-			manageTransactions.Transactions[0].TransactionType,
-			manageTransactions.Transactions[0].Amount,
-			manageTransactions.Transactions[0].Date.Time,
+			session.Transactions[0].TransactionID,
+			session.Transactions[0].TransactionName,
+			session.Transactions[0].TransactionType,
+			session.Transactions[0].Amount,
+			session.Transactions[0].Date.Time,
 			month,
 			year,
-			manageTransactions.BudgetItem.ItemName,
-			manageTransactions.BudgetItem.BudgetName)
+			session.BudgetItem.ItemName,
+			session.BudgetItem.BudgetName)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -186,7 +192,7 @@ func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r 
 		return
 	}
 
-	var results ManageTransactions
+	var results T_Session
 
 	// find all transactions related to a budget item and a month, year
 	rows, err := database.DB.Query(`
@@ -260,7 +266,7 @@ func (transaction *TransactionHandler) GetAllTransactions(w http.ResponseWriter,
 		return
 	}
 
-	var results []ManageTransactions
+	var results []T_Session
 
 	// query all budget items of month and year
 	rows, err := database.DB.Query(`
@@ -337,7 +343,7 @@ func (transaction *TransactionHandler) GetAllTransactions(w http.ResponseWriter,
 		}
 
 		// Add the result for this budget item
-		results = append(results, ManageTransactions{
+		results = append(results, T_Session{
 			BudgetItem:   bi,
 			Transactions: transactions,
 			MonthlyCosts: mc,
@@ -431,6 +437,8 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 			item_name+" doesn't exist, please try again", http.StatusNotFound)
 	}
 }
+
+// handlers
 
 // parse date in the right format
 func (date *Date) UnmarshalJSON(b []byte) error {

@@ -106,8 +106,3 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 		w.Write(body)
 	}
 }
-
-func ForecastRoutes(router *mux.Router, forecastService ForecastService) {
-	router.HandleFunc("/forecast/forecast_transactions/{months}/{budget_name}/{item_name}",
-		forecastService.ForecastTransactions).Methods("POST")
-}
