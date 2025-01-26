@@ -33,8 +33,8 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 	}
 
 	// check if budget item exists
-	if budgets.ItemExists(database.DB, user_id, session.BudgetItem.ItemName,
-		session.BudgetItem.BudgetName) {
+	if budgets.ItemExists(database.DB, user_id, session.Item.ItemName,
+		session.Item.BudgetName) {
 		// extracts month and year from the date of transaction
 		month := MonthToInt(session.Transactions[0].Date.Month().String())
 		year := session.Transactions[0].Date.Year()
@@ -45,7 +45,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		month = ? AND year = ? AND item_name = ? AND user_id = ?)`,
 			month,
 			year,
-			session.BudgetItem.ItemName,
+			session.Item.ItemName,
 			user_id).Scan(&exists)
 		if err != nil {
 			log.Fatal(err)
@@ -56,8 +56,8 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 			_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, 
 			budget_name, month, year) VALUES (?, ?, ?, ?, ?)`,
 				user_id,
-				session.BudgetItem.ItemName,
-				session.BudgetItem.BudgetName,
+				session.Item.ItemName,
+				session.Item.BudgetName,
 				month,
 				year)
 			if err != nil {
@@ -96,8 +96,8 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 			session.Transactions[0].Date.Time,
 			month,
 			year,
-			session.BudgetItem.ItemName,
-			session.BudgetItem.BudgetName)
+			session.Item.ItemName,
+			session.Item.BudgetName)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -156,8 +156,8 @@ func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r 
 	}
 
 	// add budget name, item name and month year to results
-	results.BudgetItem.BudgetName = budget_name
-	results.BudgetItem.ItemName = item_name
+	results.Item.BudgetName = budget_name
+	results.Item.ItemName = item_name
 	results.MonthlyCosts = MonthlyCosts{Month: month, Year: year}
 
 	// add array of transactions to response
@@ -232,7 +232,7 @@ func (transaction *TransactionHandler) GetAllTransactions(w http.ResponseWriter,
 
 	// build results
 	for rows.Next() {
-		var bi BudgetItem
+		var bi Item
 		var mc MonthlyCosts
 
 		// get the budget name, item name, month and year from query row
@@ -284,7 +284,7 @@ func (transaction *TransactionHandler) GetAllTransactions(w http.ResponseWriter,
 
 		// Add the result for this budget item
 		results = append(results, T_Session{
-			BudgetItem:   bi,
+			Item:         bi,
 			Transactions: transactions,
 			MonthlyCosts: mc,
 		})

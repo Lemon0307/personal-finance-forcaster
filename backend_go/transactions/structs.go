@@ -2,7 +2,7 @@ package transactions
 
 import "time"
 
-type BudgetItem struct {
+type Item struct {
 	BudgetName string `json:"budget_name"`
 	ItemName   string `json:"item_name"`
 }
@@ -23,7 +23,7 @@ type MonthlyCosts struct {
 }
 
 type T_Session struct {
-	BudgetItem   BudgetItem     `json:"budget_item"`
+	Item         Item           `json:"budget_item"`
 	Transactions []Transactions `json:"transactions"`
 	MonthlyCosts MonthlyCosts   `json:"monthly_costs"`
 }

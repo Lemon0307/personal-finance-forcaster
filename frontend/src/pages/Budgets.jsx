@@ -38,7 +38,7 @@ const Budgets = () => {
         getBudgets()
     }, [token, redirect])
 
-    const handleBudgetItemChange = (budget_index, e) => {
+    const handleItemChange = (budget_index, e) => {
         const {name, value} = e.target
 
         setBudgets((previous_budgets) =>
@@ -288,7 +288,7 @@ const Budgets = () => {
                                     placeholder="Item name..." 
                                     required 
                                     value={b.new_item.item_name}
-                                    onChange={(e) => handleBudgetItemChange(indexB, e)}/>
+                                    onChange={(e) => handleItemChange(indexB, e)}/>
                                 </td>
                                 <td className="px-5">
                                     <input type="number" 
@@ -296,7 +296,7 @@ const Budgets = () => {
                                     placeholder="Amount..." 
                                     required
                                     value={b.new_item.budget_cost} 
-                                    onChange={(e) => handleBudgetItemChange(indexB, e)}/>
+                                    onChange={(e) => handleItemChange(indexB, e)}/>
                                 </td>
                                 <td className="px-5">
                                 <input 
@@ -306,7 +306,7 @@ const Budgets = () => {
                                 value={b.new_item.priority}
                                 step="1"
                                 name="priority"
-                                onChange={(e) => handleBudgetItemChange(indexB, e)}
+                                onChange={(e) => handleItemChange(indexB, e)}
                                 className="py-2"
                                 required
                                 />
@@ -317,7 +317,7 @@ const Budgets = () => {
                                     placeholder="Description..." 
                                     required 
                                     value={b.new_item.description}
-                                    onChange={(e) => handleBudgetItemChange(indexB, e)}/>
+                                    onChange={(e) => handleItemChange(indexB, e)}/>
                                 </td>
                                 <td>
                                     <button onClick={() => handleSubmit(indexB, b.budget.budget_name)}>
