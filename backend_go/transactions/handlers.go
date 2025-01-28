@@ -18,7 +18,7 @@ import (
 // upgrades the http protocol to websocket
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins (customize as needed)
+		return true
 	},
 }
 
@@ -27,12 +27,19 @@ var upgrader = websocket.Upgrader{
 func (transaction *TransactionHandler) GetCurrentBalance(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	// extracts user_id from jwt (performed in jwt middleware)
-	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
-	if !ok {
-		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
+	// extract token from the url
+	token := mux.Vars(r)["token"]
+	if token == "" {
+		http.Error(w, "please provide a token", http.StatusUnauthorized)
 		return
 	}
+
+	//extract user id from the jwt token
+	claims, err := auth.ValidateJWT(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	user_id := claims.UserID
 
 	connection, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
