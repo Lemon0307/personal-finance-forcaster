@@ -158,7 +158,3 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 			http.StatusConflict)
 	}
 }
-
-func (auth *AuthenticationHandler) GetCurrentBalance(w http.ResponseWriter, r *http.Request) {
-
-}

@@ -25,6 +25,8 @@ func BudgetRoutes(router *mux.Router, budgetService budgets.BudgetService) {
 }
 
 func TransactionRoutes(router *mux.Router, TransactionService transactions.TransactionService) {
+	router.HandleFunc("/transactions/get_current_balance",
+		TransactionService.GetCurrentBalance).Methods("GET")
 	router.HandleFunc("/transactions/{budget_name}/{item_name}/{year}/{month}",
 		TransactionService.GetTransactions).Methods("GET")
 	router.HandleFunc("/transactions/{year}/{month}",

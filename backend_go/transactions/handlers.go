@@ -12,7 +12,49 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
+
+// upgrades the http protocol to websocket
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins (customize as needed)
+	},
+}
+
+// change this later
+
+func (transaction *TransactionHandler) GetCurrentBalance(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	// extracts user_id from jwt (performed in jwt middleware)
+	user_id, ok := r.Context().Value(auth.UserIDkey).(string)
+	if !ok {
+		http.Error(w, "Cannot find user id in context", http.StatusUnauthorized)
+		return
+	}
+
+	connection, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer connection.Close()
+
+	var current_balance float32
+
+	// get current balance from the database with user id
+	err = database.DB.QueryRow("SELECT current_balance FROM User WHERE user_id = ?", user_id).Scan(&current_balance)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = connection.WriteJSON(map[string]interface{}{
+		"current_balance": current_balance,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *http.Request) {
 	var err error
