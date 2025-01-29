@@ -105,7 +105,7 @@ const Transactions = () => {
         })
         .then(response => {
             console.log(response.data.Message)
-            // window.location.reload()
+            window.location.reload() 
         }).catch(error => {
             alert(error.response?.data || error.message)
         })

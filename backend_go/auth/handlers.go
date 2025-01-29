@@ -6,6 +6,8 @@ import (
 	"golang/database"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
 func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -156,5 +158,53 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 		w.Header().Set("Content-Type", "application/json")
 		http.Error(w, "A user with this email already has an account, please try again",
 			http.StatusConflict)
+	}
+}
+
+// upgrades the http protocol to websocket
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+// change this later
+
+func (auth *AuthenticationHandler) GetCurrentBalance(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	// extract token from the url
+	token := r.URL.Query().Get("token")
+	if token == "" {
+		http.Error(w, "please provide a token", http.StatusUnauthorized)
+		return
+	}
+
+	//extract user id from the jwt token
+	claims, err := ValidateJWT(token)
+	if err != nil {
+		log.Fatal(err)
+	}
+	user_id := claims.UserID
+
+	connection, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer connection.Close()
+
+	var current_balance float32
+
+	// get current balance from the database with user id
+	err = database.DB.QueryRow("SELECT current_balance FROM User WHERE user_id = ?", user_id).Scan(&current_balance)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = connection.WriteJSON(map[string]interface{}{
+		"current_balance": current_balance,
+	})
+	if err != nil {
+		log.Fatal(err)
 	}
 }

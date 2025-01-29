@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import io from "socket.io";
+// import io from "socket.io";
 
 const Navbar = () => {
     const redirect = useNavigate()
@@ -13,18 +13,25 @@ const Navbar = () => {
     }
 
     const [currentBalance, setCurrentBalance] = useState(null)
-    const [socket, setSocket] = useState(null)
 
     const token = localStorage.getItem("token")
 
     useEffect(() => {
-        const socket_connection = io('http://localhost:3000', {
-            query: { token: token }  // Pass JWT token as a query parameter
-        });
-        setSocket(socket_connection)
+        const socket = new WebSocket(`ws://localhost:8080/get_current_balance?token=${token}`);
 
+        socket.onmessage = (event) => {
+            const res = JSON.parse(event.data)
+            setCurrentBalance(res.current_balance)
+        }
+
+        socket.onerror = (error) => {
+            console.log(error)
+        }
+        
         return () => {
-            socket_connection.disconnect()
+            if (socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
         }
     }, [token])
 
@@ -33,14 +40,14 @@ const Navbar = () => {
     return (
         <div className="flex justify-around">
             <h1>Personal Finance Forecaster</h1>
-            <div>
+            <div className="flex">
                 {/* <select name="set_currency" id="" default="Set Currency...">
                     <option value="">Pound Sterling (£)</option>
                     <option value="">American Dollars ($)</option>
                 </select> */}
-                <h1>{currentBalance}</h1>
-                <button className="px-10" onClick={(e) => {e.preventDefault(); redirect('/')}}>Home</button>
-                <button className="px-10" onClick={(e) => {logoutHandler()}}>Logout</button>                
+                <h1 className="px-10">Current balance: £{currentBalance}</h1>
+                <button  onClick={(e) => {e.preventDefault(); redirect('/')}}>Home</button>
+                <button className="px-10" onClick={() => {logoutHandler()}}>Logout</button>                
             </div>
 
         </div>
