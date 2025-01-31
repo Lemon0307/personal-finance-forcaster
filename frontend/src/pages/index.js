@@ -6,3 +6,4 @@ export {default as UpdateBudget} from "./UpdateBudget";
 export {default as Login} from "./Login";
 export {default as SignUp} from "./SignUp";
 export {default as Transactions} from "./Transactions";
+export {default as AllTransactions} from "./AllTransactions";

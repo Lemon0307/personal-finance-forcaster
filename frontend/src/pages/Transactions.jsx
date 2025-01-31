@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from "axios";
-import { FaPlus, FaMinus, FaTimes} from 'react-icons/fa'
+import { FaPlus, FaMinus} from 'react-icons/fa'
 
 const Transactions = () => {
     const redirect = useNavigate()
