@@ -28,10 +28,12 @@ const Transactions = () => {
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear()
     })
+    
     const [dateString, setDateString] = useState(() => {
         const date_now = new Date()
         return `${date_now.getFullYear()}-${String(date_now.getMonth() + 1).padStart(2, "0")}`
     })
+
     const token = localStorage.getItem("token")
 
     useEffect(() => {

@@ -33,7 +33,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 		http.Error(w, "Budget item does not exist, please try again", http.StatusNotFound)
 	} else {
 		// get all transaction related to item name
-		res := GetTransactions(database.DB, user_id, item_name)
+		res := GetTransactions(database.DB, user_id, item_name, budget_name)
 
 		resString, err := json.Marshal(res)
 		if err != nil {

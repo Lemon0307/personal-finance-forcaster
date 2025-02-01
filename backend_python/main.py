@@ -30,7 +30,7 @@ class Forecast(Resource):
         # forecast transactions
         forecasted_transactions = forecast(transactions, int(months))
 
-        if forecasted_transactions.any() == [-1]:
+        if np.array_equal(np.array(forecasted_transactions), np.array([-1])):
             return jsonify({'message':
             'There are not enough transactions to make an accurate forecast, please provide more'})
 
@@ -72,8 +72,11 @@ class Forecast(Resource):
         mean_value = (integral(last) - integral(first)) / (last - first)
         recommended = mean_value
 
-        return jsonify({'forecast': res, 'recommended_budget': 
-        recommended})
+        return jsonify({
+            'total_transactions': transactions,
+            'forecast': res, 
+            'recommended_budget': recommended
+        })
 
 api.add_resource(Forecast, '/forecast/')
 
