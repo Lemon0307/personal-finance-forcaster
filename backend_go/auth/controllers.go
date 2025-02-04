@@ -152,7 +152,6 @@ func (account *Account) GenerateJWT() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("Generated JWT:", token_string)
 	return token_string, nil
 }
 

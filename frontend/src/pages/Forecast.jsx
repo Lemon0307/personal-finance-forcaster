@@ -145,7 +145,17 @@ const Forecast = () => {
         scales: {
             y: {
                 beginAtZero: true,
+                title: {
+                    display: true,
+                    text: "Amount (£)"
+                }
             },
+            x: {
+                title: {
+                    display: true,
+                    text: "Transaction date (month)"
+                }
+            }
         },
     };
     
@@ -198,7 +208,7 @@ const Forecast = () => {
 
                     {pastTransactions?.length > 0 && (
                         <div className="w-full h-screen">
-                            <Line data={forecastData} options={options}/>    
+                            <Line data={forecastData} options={options} className="p-3"/>    
                         </div>
                     )}
                 </div>

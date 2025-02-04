@@ -17,7 +17,7 @@ const Navbar = () => {
     const token = localStorage.getItem("token")
 
     useEffect(() => {
-        const socket = new WebSocket(`ws://localhost:8080/get_current_balance?token=${token}`);
+        const socket = new WebSocket(`ws://localhost:8080/auth/get_current_balance?token=${token}`);
 
         socket.onmessage = (event) => {
             const res = JSON.parse(event.data)
