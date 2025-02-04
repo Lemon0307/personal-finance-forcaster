@@ -27,6 +27,7 @@ const Forecast = () => {
         Year: 0,
         TotalAmount: 0.00
     }])
+    const [recommendedBudget, setRecommendedBudget] = useState(1)
 
     const [budgetData, setBudgetData] = useState([
         {
@@ -76,7 +77,6 @@ const Forecast = () => {
 
     const ForecastTransactions = async () => {
         try {
-            console.log(`http://localhost:8080/main/forecast/${months}/${budget}/${item}`)
             const response = await axios.get(`http://localhost:8080/main/forecast/${months}/${budget}/${item}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -84,14 +84,30 @@ const Forecast = () => {
             })
             setForecast(response.data.forecast)
             setPastTransactions(response.data.total_transactions)
+            setRecommendedBudget(response.data.recommended_budget)
             // console.log(response.data)
         } catch (error) {
             alert(error.response?.data || error.message);
         }
     }
 
-    const chartData = {
-        labels: [...pastTransactions, ...forecast].map(entry => `Month ${entry.Month}/${entry.Year}`),
+    const handleApplyBudget = async () => {
+        try {
+            const response = await axios.put(`http://localhost:8080/main/budgets/update_budget_item/${budget}/${item}`, {
+                budget_cost: recommendedBudget
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            alert("Successfully applied budget to item")
+        } catch (error) {
+            alert(error.response?.data || error.message);
+        }
+    }
+
+    const forecastData = {
+        labels: [...pastTransactions, ...forecast].map(entry => `${entry.Month}/${entry.Year}`),
         datasets: [
             {
                 label: "Past Transactions",
@@ -106,7 +122,14 @@ const Forecast = () => {
                 borderColor: "red",
                 backgroundColor: "rgba(255, 0, 0, 0.2)",
                 tension: 0.4,
-                borderDash: [5, 5]
+            },
+            {
+                label: "Recommended Budget",
+                data: new Array(5).fill(recommendedBudget),
+                borderColor: "green",
+                borderWidth: 2,
+                borderDash: [5, 5],
+                pointRadius: 0
             }
         ]
     };
@@ -175,9 +198,13 @@ const Forecast = () => {
 
                     {pastTransactions?.length > 0 && (
                         <div className="w-full h-screen">
-                            <Line data={chartData} options={options}/>    
-                        </div>    
+                            <Line data={forecastData} options={options}/>    
+                        </div>
                     )}
+                </div>
+                <div className="flex items-center">
+                    <h1 className="px-5">Recommended Budget: {recommendedBudget}</h1>
+                    <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button>
                 </div>
             </div>
         </div>
