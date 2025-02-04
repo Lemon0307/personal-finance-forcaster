@@ -85,9 +85,9 @@ const Forecast = () => {
             setForecast(response.data.forecast)
             setPastTransactions(response.data.total_transactions)
             setRecommendedBudget(response.data.recommended_budget)
-            // console.log(response.data)
         } catch (error) {
-            alert(error.response?.data || error.message);
+            console.log(error.response.data.message)
+            alert(error.response?.data.message);
         }
     }
 
@@ -118,7 +118,7 @@ const Forecast = () => {
             },
             {
                 label: "Forecasted Transactions",
-                data: [...new Array(pastTransactions.length).fill(null), ...forecast.map(entry => entry.TotalAmount)],
+                data: [...new Array(pastTransactions?.length).fill(null), ...forecast.map(entry => entry.TotalAmount)],
                 borderColor: "red",
                 backgroundColor: "rgba(255, 0, 0, 0.2)",
                 tension: 0.4,
@@ -200,20 +200,22 @@ const Forecast = () => {
                             defaultValue={0}
                             value={months}
                             onChange={(e) => {setMonths(e.target.value)}}
+                            min={1}
                             />
                             <h1>months</h1>
                         </div>
-                        <button onClick={() => ForecastTransactions()}>Forecast</button>
+                        {item && <button onClick={() => ForecastTransactions()}>Forecast</button>}
+                        
                     </div>
 
                     {pastTransactions?.length > 0 && (
                         <div className="w-full h-screen">
-                            <Line data={forecastData} options={options} className="p-3"/>    
+                            <Line data={forecastData} options={options} className="p-3"/>
                         </div>
                     )}
                 </div>
                 <div className="flex items-center">
-                    <h1 className="px-5">Recommended Budget: {recommendedBudget}</h1>
+                    <h1 className="px-5">Recommended Budget: £{recommendedBudget.toFixed(2)}</h1>
                     <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button>
                 </div>
             </div>

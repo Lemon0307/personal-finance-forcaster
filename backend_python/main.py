@@ -33,8 +33,11 @@ class Forecast(Resource):
         forecasted_transactions = forecast(transactions, int(months))
 
         if np.array_equal(np.array(forecasted_transactions), np.array([-1])):
-            return jsonify({'message':
-            'There are not enough transactions to make an accurate forecast, please provide more'})
+            error = jsonify({
+                'message': '''There are not enough transactions to make an accurate forecast, 
+                please provide at least 5 months of transactions'''})
+            error.status_code = 400
+            return error
 
         # generate month and year for forecasted transactions
         latest = max(dates, key = lambda x: (x['year'], x['month']))
