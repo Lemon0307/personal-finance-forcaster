@@ -2,16 +2,18 @@ from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
 from ARIMA import forecast
 import numpy as np
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 
 api = Api(app)
-CORS(app)
+CORS(app, supports_credentials=True)
 
 class Forecast(Resource):
+    @cross_origin()
     def post(self):
         jsonData = request.get_json()
+        print(jsonData)
         # get the number of months to forecast from url
         months = request.args.get('months')
         if not jsonData:
@@ -50,9 +52,9 @@ class Forecast(Resource):
                 forecast_year -= 1
 
             res.append({
-                'month': forecast_month,
-                'year': forecast_year,
-                'forecasted_transaction': forecasted_transactions[i],
+                'Month': forecast_month,
+                'Year': forecast_year,
+                'TotalAmount': forecasted_transactions[i],
             })
 
         #combine the original transactions with the forecast
@@ -73,12 +75,12 @@ class Forecast(Resource):
         recommended = mean_value
 
         return jsonify({
-            'total_transactions': transactions,
-            'forecast': res, 
+            'total_transactions': jsonData,
+            'forecast': res,
             'recommended_budget': recommended
         })
 
-api.add_resource(Forecast, '/forecast/')
+api.add_resource(Forecast, '/forecast')
 
 if __name__ == '__main__':
-    app.run(debug=True, host='localhost', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

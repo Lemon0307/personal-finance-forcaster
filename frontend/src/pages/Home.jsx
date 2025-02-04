@@ -39,8 +39,6 @@ const Home = () => {
                     }
                 });
 
-                console.log(response.data)
-
                 if (!Array.isArray(response.data) || response.data.length === 0) {
                     setHasTransactions(false);
                     setData(null);

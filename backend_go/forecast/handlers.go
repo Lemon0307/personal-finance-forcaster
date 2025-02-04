@@ -3,6 +3,7 @@ package forecast
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"golang/auth"
 	"golang/budgets"
 	"golang/database"
@@ -40,19 +41,21 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 			log.Fatal(err)
 		}
 
+		fmt.Println(res)
 		// request the python forecasting api
-		req, err := http.NewRequest("POST", "http://localhost:5000/forecast?months="+months,
-			bytes.NewBuffer([]byte(resString)))
+		req, err := http.NewRequest("POST", "http://0.0.0.0:5000/forecast?months="+months,
+			bytes.NewBuffer(resString))
+		req.Header.Set("Content-Type", "application/json")
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		req.Header.Set("Content-Type", "application/json")
 		client := &http.Client{}
 		response, err := client.Do(req)
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println(response.Body)
 		defer response.Body.Close()
 
 		// read response from request
@@ -63,6 +66,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 
 		// output results to the user
 		w.Header().Set("Content-Type", "application/json")
+		fmt.Println(response.StatusCode)
 		w.WriteHeader(response.StatusCode)
 		w.Write(body)
 	}
