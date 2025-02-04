@@ -185,7 +185,6 @@ func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r 
 		results.Transactions = append(results.Transactions, t)
 	}
 
-	fmt.Println(results)
 	// show results
 	w.Header().Set("Content-Type", "application/json")
 	// parse results struct to json
@@ -297,8 +296,6 @@ func (transaction *TransactionHandler) GetAllTransactions(w http.ResponseWriter,
 		}
 	}
 
-	fmt.Println(results)
-
 	// show results
 	w.Header().Set("Content-Type", "application/json")
 	// parse results struct to json
@@ -325,7 +322,6 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 	// check if transaction exists in the db
 	transaction_exists := TransactionExists(database.DB, transaction_id, user_id, month, year,
 		item_name, budget_name)
-	fmt.Println(transaction_exists)
 
 	// get amount and transaction type from transactions
 	var t_type string

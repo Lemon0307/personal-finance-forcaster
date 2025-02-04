@@ -93,7 +93,7 @@ const Forecast = () => {
 
     const handleApplyBudget = async () => {
         try {
-            const response = await axios.put(`http://localhost:8080/main/budgets/update_budget_item/${budget}/${item}`, {
+            await axios.put(`http://localhost:8080/main/budgets/update_budget_item/${budget}/${item}`, {
                 budget_cost: recommendedBudget
             }, {
                 headers: {

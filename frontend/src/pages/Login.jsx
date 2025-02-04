@@ -53,7 +53,7 @@ const Login = () => {
         security_questions: securityQuestions,
       };
       console.log(userData)
-    const response = await axios.post("http://localhost:8080/login", userData)
+    const response = await axios.post("http://localhost:8080/auth/login", userData)
     alert(response.data.Message)
     localStorage.setItem("token", response.data.Token)
     localStorage.setItem("username", userData.user.username)

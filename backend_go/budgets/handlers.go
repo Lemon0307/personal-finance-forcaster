@@ -34,7 +34,6 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 
 	// check if budget exists in the database
 	budget_exists := BudgetExists(database.DB, user_id, manageBudget.Budget.BudgetName)
-	fmt.Println(budget_exists)
 	if !budget_exists {
 		// add budget
 		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
@@ -334,7 +333,6 @@ func (budget *BudgetHandler) UpdateItem(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var budget_item Items
-	fmt.Println(budget_item)
 	_ = json.NewDecoder(r.Body).Decode(&budget_item)
 
 	// building query string

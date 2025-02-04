@@ -60,7 +60,7 @@ const SignUp = () => {
         security_questions: securityQuestions,
       };
       console.log(userData)
-    const response = await axios.post("http://localhost:8080/sign_up", userData)
+    const response = await axios.post("http://localhost:8080/auth/sign_up", userData)
     alert(response.data.Message)
     e.preventDefault()
     // redirects to login page after success message

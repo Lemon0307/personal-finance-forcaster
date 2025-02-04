@@ -56,7 +56,6 @@ func TransactionExists(db *sql.DB, transaction_id, user_id string, month, year i
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(res)
 	return res
 }
 
