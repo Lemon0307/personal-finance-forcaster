@@ -18,3 +18,4 @@ Key optimisations that the program needs to contain:
 -   Program has to run fast with large scale of user access
 -   Program has to be in good modular design
 -   Program needs to have good error handling
+-   Program needs to implement security measures to prevent ddos attacks etc.
