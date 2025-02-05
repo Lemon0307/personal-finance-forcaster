@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from 'react-router-dom';
-import axios from "axios";
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from 'react-router-dom'
+import axios from "axios"
 import { FaPlus, FaMinus} from 'react-icons/fa'
+import { quickSort } from "../components"
+
 
 const Transactions = () => {
     const redirect = useNavigate()
@@ -114,10 +116,9 @@ const Transactions = () => {
     }
     
     const handleSort = (e) => {
-        setSort(e.target.value)
-        switch (sort) {
-
-        }
+        setTransactions((previousTransactions) => (
+            previousTransactions = quickSort(previousTransactions, e.target.value)
+        ));
     }
 
     const handleMonthYearChange = (e) => {
@@ -135,8 +136,8 @@ const Transactions = () => {
             <div className="px-10">
                 <h1>Sort by:</h1>
                 <select value={sort} onChange={handleSort}>
-                    <option value="name">Name</option>
-                    <option value="type">Type</option>
+                    <option value="transaction_name">Name</option>
+                    <option value="transaction_type">Type</option>
                     <option value="amount">Amount</option>
                     <option value="date">Date</option>
                 </select>

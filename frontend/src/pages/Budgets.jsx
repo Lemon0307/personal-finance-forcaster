@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaPlus, FaMinus, FaTimes } from "react-icons/fa";
 import axios from "axios"
+import { quickSort } from "../components";
 
 const Budgets = () => {
     const redirect = useNavigate()
@@ -15,7 +16,6 @@ const Budgets = () => {
     const [isEditingBudget, setIsEditingBudget] = useState(false)
     const [editingItem, setEditingItem] = useState({ budgetIndex: null, itemIndex: null });
     const token = localStorage.getItem('token')
-    const [sort, setSort] = useState(null)
 
     useEffect(() => {
         if (token === null) {
@@ -57,10 +57,12 @@ const Budgets = () => {
     }
 
     const handleSort = (e) => {
-        setSort(e.target.value)
-        switch (sort) {
-
-        }
+        setBudgets((previousBudgets) => 
+            previousBudgets.map((budget) => ({
+                ...budget,
+                budget_items: quickSort(budget.budget_items, e.target.value),
+            }))
+        );
     }
 
     const handleSubmit = async (budget_index, budget_name) => {
@@ -172,9 +174,9 @@ const Budgets = () => {
             <div className="px-10">
                 <button onClick={(e) => {e.preventDefault(); redirect("/budgets/add-budget")}}>Add Budget</button>
                 <h1>Sort by:</h1>
-                <select value={sort} onChange={handleSort}>
-                    <option value="item">Item</option>
-                    <option value="amount">Amount</option>
+                <select onChange={handleSort}>
+                    <option value="item_name">Item</option>
+                    <option value="budget_cost">Amount</option>
                     <option value="priority">Priority</option>
                     <option value="description">Description</option>
                 </select>

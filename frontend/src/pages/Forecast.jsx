@@ -214,10 +214,12 @@ const Forecast = () => {
                         </div>
                     )}
                 </div>
+                {forecast.length > 0 && 
                 <div className="flex items-center">
                     <h1 className="px-5">Recommended Budget: £{recommendedBudget.toFixed(2)}</h1>
                     <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button>
-                </div>
+                </div>}
+
             </div>
         </div>
     )
