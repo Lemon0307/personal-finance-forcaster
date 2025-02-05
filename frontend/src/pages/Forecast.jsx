@@ -34,7 +34,7 @@ const Forecast = () => {
             budget: {
                 budget_name: ""
             },
-            budget_items: [
+            items: [
                 {
                     item_name: "",
                     budget_cost: 0.00,
@@ -93,7 +93,7 @@ const Forecast = () => {
 
     const handleApplyBudget = async () => {
         try {
-            await axios.put(`http://localhost:8080/main/budgets/update_budget_item/${budget}/${item}`, {
+            await axios.put(`http://localhost:8080/main/budgets/update_item/${budget}/${item}`, {
                 budget_cost: recommendedBudget
             }, {
                 headers: {
@@ -181,10 +181,10 @@ const Forecast = () => {
                         </select>
 
                         {/* Budget Item Selection */}
-                        {selectedBudgetData && selectedBudgetData?.budget_items?.length > 0 ? (
+                        {selectedBudgetData && selectedBudgetData?.items?.length > 0 ? (
                             <select onChange={(e) => handleSelectItem(e)} value={item}>
                                 <option value="" disabled>Select Item...</option>
-                                {selectedBudgetData.budget_items.map((item, index) => (
+                                {selectedBudgetData.items.map((item, index) => (
                                     <option key={index} value={item.item_name}>
                                         {item.item_name}
                                     </option>

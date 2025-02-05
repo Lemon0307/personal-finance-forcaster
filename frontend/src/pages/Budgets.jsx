@@ -27,7 +27,7 @@ const Budgets = () => {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
-                setBudgets(response?.data.map((budget) => ({
+                setBudgets(response?.data?.map((budget) => ({
                     ...budget,
                     new_item: { item_name: "", budget_cost: 0, description: "", priority: 0 },
                 })));
@@ -57,11 +57,14 @@ const Budgets = () => {
     }
 
     const handleSort = (e) => {
-        setBudgets((previousBudgets) => 
+        setBudgets((previousBudgets) => {
+            previousBudgets &&
             previousBudgets.map((budget) => ({
                 ...budget,
-                budget_items: quickSort(budget.budget_items, e.target.value),
-            }))
+                items: quickSort(budget.items, e.target.value),
+            }))            
+        }
+
         );
     }
 
@@ -88,7 +91,7 @@ const Budgets = () => {
         }
         console.log(reqData)
 
-        await axios.post(`http://localhost:8080/main/budgets/add_budget_item/${new_item.budget_name}`, reqData, {
+        await axios.post(`http://localhost:8080/main/budgets/add_item/${new_item.budget_name}`, reqData, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -123,7 +126,7 @@ const Budgets = () => {
         updateItem.budget_cost = parseFloat(updateItem.budget_cost)
         updateItem.priority = parseInt(updateItem.priority)
         console.log(JSON.stringify(updateItem))
-        await axios.put(`http://localhost:8080/main/budgets/update_budget_item/${budget_name}/${item_name}`,
+        await axios.put(`http://localhost:8080/main/budgets/update_item/${budget_name}/${item_name}`,
             updateItem, {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -158,7 +161,7 @@ const Budgets = () => {
     }
 
     const handleRemoveItem = async (budget_name, item_name) => {
-        await axios.delete(`http://localhost:8080/main/budgets/remove_budget_item/${budget_name}/${item_name}`, {
+        await axios.delete(`http://localhost:8080/main/budgets/remove_item/${budget_name}/${item_name}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
@@ -174,7 +177,7 @@ const Budgets = () => {
             <div className="px-10">
                 <button onClick={(e) => {e.preventDefault(); redirect("/budgets/add-budget")}}>Add Budget</button>
                 <h1>Sort by:</h1>
-                <select onChange={handleSort}>
+                <select onChange={(e) => handleSort(e)}>
                     <option value="item_name">Item</option>
                     <option value="budget_cost">Amount</option>
                     <option value="priority">Priority</option>
@@ -183,7 +186,7 @@ const Budgets = () => {
             </div>
             <div className="grid place-content-center">
                 <h1>My Budgets</h1>
-                {budgets !== null ? budgets.map((b, indexB) => (
+                {budgets && budgets.length > 0 ? budgets.map((b, indexB) => (
                     <div key={indexB} className="py-5">
                             <div className="flex justify-around">
                                 {isEditingBudget ? 
@@ -215,8 +218,8 @@ const Budgets = () => {
                                 <th className="px-5">Priority</th>
                                 <th className="px-5">Description</th>
                             </tr>
-                            {Array.isArray(b.budget_items) && b.budget_items[0] !== null ?
-                             b.budget_items.map((bi, indexBI) => (
+                            {Array.isArray(b.items) && b.items[0] !== null ?
+                             b.items.map((bi, indexBI) => (
                                 <tr key={indexBI}>
                                     <td className="px-5">{bi.item_name}</td>
                                     <td className="px-5">£{bi.budget_cost}</td>
@@ -282,7 +285,7 @@ const Budgets = () => {
                                         </div>                                   
                                     : null}
                                 </tr>                                
-                            )) : null}
+                            )) : <h1>There are no budgets.</h1>}
                             <tr>
                                 <td className="px-5" >
                                     <input type="text" 

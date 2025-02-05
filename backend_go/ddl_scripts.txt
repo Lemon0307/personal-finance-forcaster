@@ -57,8 +57,8 @@ CREATE TABLE IF NOT EXISTS Monthly_Costs (
 CREATE TABLE IF NOT EXISTS Transactions (
     transaction_id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL,
-    transaction_name VARCHAR(100) NOT NULL,
-    transaction_type VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    type VARCHAR(50) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
     month INT NOT NULL,
     year INT NOT NULL,

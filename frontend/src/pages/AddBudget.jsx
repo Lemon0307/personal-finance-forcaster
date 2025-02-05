@@ -23,7 +23,7 @@ const AddBudget = () => {
     }, [token, redirect])
 
     const handleSubmit = async () => {
-        const details = {budget: budget, budget_items: items}
+        const details = {budget: budget, items: items}
         console.log(budget)
         console.log(items)
         await axios.post("http://localhost:8080/main/budgets/add_budget", details, {

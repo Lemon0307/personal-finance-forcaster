@@ -4,15 +4,15 @@ import axios from "axios"
 const AllTransactions = () => {
     const [data, setData] = useState([
         {
-            budget_item: {
+            item: {
                 budget_name: "",
                 item_name: ""
             },
             transactions: [
                 {
                     transaction_id: "",
-                    transaction_name: "",
-                    transaction_type: "",
+                    name: "",
+                    type: "",
                     amount: 0.00,
                     date: ""
                 }
@@ -82,7 +82,7 @@ const AllTransactions = () => {
             {Array.isArray(data) && data[0] !== null ? data.map((t, index) => (
                 <div>
 
-                    <h1>{t.budget_item.budget_name}</h1>
+                    <h1>{t.item.budget_name}</h1>
                     <table>
                     <tr>
                         <th className="px-5">Name</th>
@@ -92,8 +92,8 @@ const AllTransactions = () => {
                     </tr>
                     {t.transactions.map((t, index) => (
                         <tr key={index}>
-                            <td className="px-5">{t.transaction_name}</td>
-                            <td className="px-5">{t.transaction_type}</td>
+                            <td className="px-5">{t.name}</td>
+                            <td className="px-5">{t.type}</td>
                             <td className="px-5">£{t.amount}</td>
                             <td className="px-5">{`${t.date.substring(0, 10)}`}</td>
                         </tr>

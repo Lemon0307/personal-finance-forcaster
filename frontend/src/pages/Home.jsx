@@ -46,8 +46,8 @@ const Home = () => {
                 }
     
                 const groupedData = response.data.reduce((acc, budget) => {
-                    const budgetName = budget.budget_item.budget_name;
-                    const itemName = budget.budget_item.item_name;
+                    const budgetName = budget.item.budget_name;
+                    const itemName = budget.item.item_name;
                     const transactionAmount = budget.transactions ? budget.transactions.reduce((sum, transaction) => sum + transaction.amount, 0) : 0;
 
                     if (!acc[budgetName]) {

@@ -146,11 +146,11 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	// Query to get budgets with associated items
 	rows, err := database.DB.Query(`
         SELECT budget.user_id, budget.budget_name, 
-               budget_items.item_name, budget_items.budget_cost, 
-               budget_items.description, budget_items.priority
+               items.item_name, items.budget_cost, 
+               items.description, items.priority
         FROM Budget budget
-        LEFT JOIN Budget_Items budget_items
-        ON budget.user_id = budget_items.user_id AND budget.budget_name = budget_items.budget_name
+        LEFT JOIN Budget_Items items
+        ON budget.user_id = items.user_id AND budget.budget_name = items.budget_name
         WHERE budget.user_id = ?`, user_id)
 	if err != nil {
 		log.Fatal(err)
@@ -161,7 +161,7 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var user_id string
 		var budget Budget
-		var budget_item Items
+		var item Items
 		// handle budget items and their possible null values
 		var itemName sql.NullString
 		var budgetCost sql.NullFloat64
@@ -190,16 +190,16 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 			budgets[budget.BudgetName].Items = append(budgets[budget.BudgetName].Items, nil)
 		} else {
 			// set variables to corresponding budget item values
-			budget_item.ItemName = itemName.String
-			budget_item.BudgetCost = budgetCost.Float64
-			budget_item.Description = description.String
-			budget_item.Priority = priority.Int32
+			item.ItemName = itemName.String
+			item.BudgetCost = budgetCost.Float64
+			item.Description = description.String
+			item.Priority = priority.Int32
 			// append the object to the budget items array
 			budgets[budget.BudgetName].Items = append(budgets[budget.BudgetName].Items, &Items{
-				ItemName:    budget_item.ItemName,
-				BudgetCost:  budget_item.BudgetCost,
-				Description: budget_item.Description,
-				Priority:    budget_item.Priority,
+				ItemName:    item.ItemName,
+				BudgetCost:  item.BudgetCost,
+				Description: item.Description,
+				Priority:    item.Priority,
 			})
 		}
 	}
@@ -332,8 +332,8 @@ func (budget *BudgetHandler) UpdateItem(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var budget_item Items
-	_ = json.NewDecoder(r.Body).Decode(&budget_item)
+	var item Items
+	_ = json.NewDecoder(r.Body).Decode(&item)
 
 	// building query string
 	query := "UPDATE Budget_Items SET"
@@ -341,17 +341,17 @@ func (budget *BudgetHandler) UpdateItem(w http.ResponseWriter, r *http.Request) 
 	columns := []string{}
 
 	// check if conditions exist
-	if budget_item.BudgetCost != 0 {
+	if item.BudgetCost != 0 {
 		columns = append(columns, "budget_cost = ?")
-		args = append(args, budget_item.BudgetCost)
+		args = append(args, item.BudgetCost)
 	}
-	if budget_item.Description != "" {
+	if item.Description != "" {
 		columns = append(columns, "description = ?")
-		args = append(args, budget_item.Description)
+		args = append(args, item.Description)
 	}
-	if budget_item.Priority != 0 {
+	if item.Priority != 0 {
 		columns = append(columns, "priority = ?")
-		args = append(args, budget_item.Priority)
+		args = append(args, item.Priority)
 	}
 
 	if len(columns) > 0 {

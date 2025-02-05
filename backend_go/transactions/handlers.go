@@ -32,74 +32,76 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		return
 	}
 
-	// check if budget item exists
+	// check if item exists
 	if budgets.ItemExists(database.DB, user_id, session.Item.ItemName,
 		session.Item.BudgetName) {
-		// extracts month and year from the date of transaction
-		month := MonthToInt(session.Transactions[0].Date.Month().String())
-		year := session.Transactions[0].Date.Year()
+		for i := 0; i < len(session.Transactions); i++ {
+			// extracts month and year from the date of transaction
+			month := MonthToInt(session.Transactions[i].Date.Month().String())
+			year := session.Transactions[i].Date.Year()
 
-		var exists bool
-		// finds if a record of month and year exists in monthly costs table
-		err = database.DB.QueryRow(`SELECT EXISTS(SELECT * FROM Monthly_Costs WHERE 
-		month = ? AND year = ? AND item_name = ? AND user_id = ?)`,
-			month,
-			year,
-			session.Item.ItemName,
-			user_id).Scan(&exists)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// if the record doesn't exist then add a record of monthly costs
-		if !exists {
-			_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, 
-			budget_name, month, year) VALUES (?, ?, ?, ?, ?)`,
-				user_id,
-				session.Item.ItemName,
-				session.Item.BudgetName,
+			var exists bool
+			// finds if a record of month and year exists in monthly costs table
+			err = database.DB.QueryRow(`SELECT EXISTS(SELECT * FROM Monthly_Costs WHERE 
+			month = ? AND year = ? AND item_name = ? AND user_id = ?)`,
 				month,
-				year)
+				year,
+				session.Item.ItemName,
+				user_id).Scan(&exists)
 			if err != nil {
 				log.Fatal(err)
 			}
-		}
 
-		// generate a transaction id for the transaction
-		session.Transactions[0].TransactionID = GenerateTransactionID()
+			// if the record doesn't exist then add a record of monthly costs
+			if !exists {
+				_, err = database.DB.Exec(`INSERT INTO Monthly_Costs (user_id, item_name, 
+				budget_name, month, year) VALUES (?, ?, ?, ?, ?)`,
+					user_id,
+					session.Item.ItemName,
+					session.Item.BudgetName,
+					month,
+					year)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
 
-		// add or subtract the current balance with transaction
-		switch session.Transactions[0].TransactionType {
-		case "inflow":
-			_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance + ? 
-			WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
+			// generate a transaction id for the transaction
+			session.Transactions[i].TransactionID = GenerateTransactionID()
+
+			// add or subtract the current balance with transaction
+			switch session.Transactions[i].TransactionType {
+			case "inflow":
+				_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance + ? 
+				WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
+				if err != nil {
+					log.Fatal(err)
+				}
+			case "outflow":
+				_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance - ? 
+				WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
+			// add transaction data to the database
+			_, err = database.DB.Exec(`INSERT INTO Transactions (user_id, transaction_id, 
+			name, type, 
+			amount, date, month, year, item_name, budget_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				user_id,
+				session.Transactions[i].TransactionID,
+				session.Transactions[i].TransactionName,
+				session.Transactions[i].TransactionType,
+				session.Transactions[i].Amount,
+				session.Transactions[i].Date.Time,
+				month,
+				year,
+				session.Item.ItemName,
+				session.Item.BudgetName)
 			if err != nil {
 				log.Fatal(err)
 			}
-		case "outflow":
-			_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance - ? 
-			WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		// add transaction data to the database
-		_, err = database.DB.Exec(`INSERT INTO Transactions (user_id, transaction_id, 
-		transaction_name, transaction_type, 
-		amount, date, month, year, item_name, budget_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			user_id,
-			session.Transactions[0].TransactionID,
-			session.Transactions[0].TransactionName,
-			session.Transactions[0].TransactionType,
-			session.Transactions[0].Amount,
-			session.Transactions[0].Date.Time,
-			month,
-			year,
-			session.Item.ItemName,
-			session.Item.BudgetName)
-		if err != nil {
-			log.Fatal(err)
 		}
 
 		// success message
@@ -138,8 +140,8 @@ func (transaction *TransactionHandler) GetTransactions(w http.ResponseWriter, r 
 	rows, err := database.DB.Query(`
 	SELECT 
 		t.transaction_id,
-		t.transaction_name,
-		t.transaction_type,
+		t.name,
+		t.type,
 		t.amount,
 		t.date
 	FROM 
@@ -245,8 +247,8 @@ func (transaction *TransactionHandler) GetAllTransactions(w http.ResponseWriter,
 		transRows, err := database.DB.Query(`
 		SELECT 
 			t.transaction_id,
-			t.transaction_name,
-			t.transaction_type,
+			t.name,
+			t.type,
 			t.amount,
 			t.date
 		FROM 
@@ -327,7 +329,7 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 	var t_type string
 	var t_amount float32
 
-	database.DB.QueryRow(`SELECT transaction_type, amount FROM Transactions 
+	database.DB.QueryRow(`SELECT type, amount FROM Transactions 
 	WHERE user_id = ? AND transaction_id = ?`, user_id, transaction_id).Scan(&t_type, &t_amount)
 
 	// undos transaction addition/subtraction to current balance

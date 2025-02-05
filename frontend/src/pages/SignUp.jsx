@@ -128,6 +128,7 @@ const SignUp = () => {
             className="py-2 my-2"
             required
           />
+          Date of birth:
           <input
             type="date"
             name="dob"

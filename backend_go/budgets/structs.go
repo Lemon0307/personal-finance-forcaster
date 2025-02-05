@@ -13,7 +13,7 @@ type Items struct {
 
 type B_Session struct {
 	Budget Budget   `json:"budget"`
-	Items  []*Items `json:"budget_items"`
+	Items  []*Items `json:"items"`
 }
 
 type BudgetHandler struct{}

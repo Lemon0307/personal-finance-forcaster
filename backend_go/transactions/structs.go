@@ -9,8 +9,8 @@ type Item struct {
 
 type Transactions struct {
 	TransactionID   string  `json:"transaction_id"`
-	TransactionName string  `json:"transaction_name"`
-	TransactionType string  `json:"transaction_type"`
+	TransactionName string  `json:"name"`
+	TransactionType string  `json:"type"`
 	Amount          float32 `json:"amount"`
 	Date            Date    `json:"date"`
 }
@@ -23,7 +23,7 @@ type MonthlyCosts struct {
 }
 
 type T_Session struct {
-	Item         Item           `json:"budget_item"`
+	Item         Item           `json:"item"`
 	Transactions []Transactions `json:"transactions"`
 	MonthlyCosts MonthlyCosts   `json:"monthly_costs"`
 }

@@ -12,16 +12,16 @@ const Transactions = () => {
     const [transactions, setTransactions] = useState([
         {
             transaction_id: "",
-            transaction_name: "",
-            transaction_type: "",
+            name: "",
+            type: "",
             amount: 0.00,
             date: ""
         }
     ])
 
     const [newTransaction, setNewTransaction] = useState({
-        transaction_name: "",
-        transaction_type: "",
+        name: "",
+        type: "",
         amount: 0.00,
         date: ""
     })
@@ -80,7 +80,7 @@ const Transactions = () => {
             return;
         }
         const reqData = {
-            budget_item: {
+            item: {
                 budget_name: budget_name,
                 item_name: item_name
             }, transactions: [{
@@ -136,8 +136,8 @@ const Transactions = () => {
             <div className="px-10">
                 <h1>Sort by:</h1>
                 <select value={sort} onChange={handleSort}>
-                    <option value="transaction_name">Name</option>
-                    <option value="transaction_type">Type</option>
+                    <option value="name">Name</option>
+                    <option value="type">Type</option>
                     <option value="amount">Amount</option>
                     <option value="date">Date</option>
                 </select>
@@ -162,8 +162,8 @@ const Transactions = () => {
                     {Array.isArray(transactions) && transactions[0] !== null ? 
                     transactions.map((transaction, index) => (
                     <tr key={index}>
-                        <td className="px-5">{transaction.transaction_name}</td>
-                        <td className="px-5">{transaction.transaction_type}</td>
+                        <td className="px-5">{transaction.name}</td>
+                        <td className="px-5">{transaction.type}</td>
                         <td className="px-5">£{transaction.amount}</td>
                         <td className="px-5">{`${transaction.date.substring(0, 10)}`}</td>
                         <td>
@@ -177,14 +177,14 @@ const Transactions = () => {
                     <tr>
                     <td className="px-5" >
                         <input type="text" 
-                        name="transaction_name" 
+                        name="name" 
                         placeholder="Name..." 
                         required 
-                        value={newTransaction.transaction_name}
+                        value={newTransaction.name}
                         onChange={(e) => handleTransactionChange(e)}/>
                     </td>
                     <td className="px-5" >
-                        <select name="transaction_type" 
+                        <select name="type" 
                         onChange={(e) => {handleTransactionChange(e)}
                         }
                         className="p-2 border-r- bg-zinc-100"
