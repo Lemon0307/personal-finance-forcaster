@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import axios from "axios"
 import { FaPlus, FaMinus} from 'react-icons/fa'
 import { quickSort } from "../components"
+import { parseCSVToJSON } from "../components/Parsing.js"
 
 
 const Transactions = () => {
@@ -18,6 +19,7 @@ const Transactions = () => {
             date: ""
         }
     ])
+    const [csvFile, setCSVfile] = useState()
 
     const [newTransaction, setNewTransaction] = useState({
         name: "",
@@ -88,13 +90,15 @@ const Transactions = () => {
                     amount: parseFloat(newTransaction.amount)                           
             }]
         }
+        console.log(reqData)
         await axios.post("http://localhost:8080/main/transactions/add_transaction", reqData, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         }).then(response => {
             console.log(response.data.Message)
-            window.location.reload()
+            setTransactions(prev => Array.isArray(prev) ? [...prev, newTransaction] : [newTransaction]);
+            
         }).catch(error => {
             alert(error.response?.data || error.message)
         })
@@ -109,7 +113,7 @@ const Transactions = () => {
         })
         .then(response => {
             console.log(response.data.Message)
-            window.location.reload() 
+            setTransactions(prev => prev.filter(transaction => transaction.transaction_id !== transaction_id));
         }).catch(error => {
             alert(error.response?.data || error.message)
         })
@@ -129,6 +133,58 @@ const Transactions = () => {
             month: parseInt(date_string[1]),
             year: parseInt(date_string[0])
         }))
+    }
+
+    const handleExportCSV = () => {
+        if (!transactions) {
+            return;
+        }
+        const headers = Object.keys(transactions[0])
+        const rows = transactions.map(transaction => {
+            return headers.map(header => transaction[header]).join(",")
+        })
+        const file = [headers.join(","), ...rows].join("\n")
+        const blob = new Blob([file], {type: "text/csv"})
+        const link = document.createElement("a")
+        link.href = URL.createObjectURL(blob)
+        link.download = `${date.month}-${date.year}-${item_name}-${budget_name}`
+        link.click()
+    }
+
+    const handleImportCSV = () => {
+        const reader = new FileReader()
+
+        reader.onload = async () => {
+            const csv = reader.result
+            const transactions = parseCSVToJSON(csv)
+
+            const importData = {
+                item: {
+                    budget_name: budget_name,
+                    item_name: item_name,
+                },
+                transactions: transactions,
+                monthly_costs: {
+                    month: new Date().getMonth() + 1,
+                    year: new Date().getFullYear()
+                }
+            }
+
+            try {
+                console.log(importData)
+                const response = await axios.post(`http://localhost:8080/main/transactions/add_transaction`, 
+                    importData,
+                    {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                })
+                alert(response.data.Message)
+            } catch (error) {
+                alert(error.response?.data)
+            }
+        }
+        reader.readAsText(csvFile);
     }
 
     return (
@@ -217,6 +273,11 @@ const Transactions = () => {
                     </td>
                     </tr>
                 </table>             
+            </div>
+            <div>
+                <button className="p-5" onClick={() => handleExportCSV()}>Export to CSV</button>
+                <input type="file" accept=".csv" onChange={(e) => setCSVfile(e.target.files[0])}/>
+                <button className="p-5" onClick={() => handleImportCSV()}>Import from CSV</button>                
             </div>
 
         </div>
