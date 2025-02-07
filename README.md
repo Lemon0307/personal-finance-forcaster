@@ -2,6 +2,10 @@ A Level computer science NEA project
 
 Personal Finance Forecaster
 
+Brief summary of the project: 
+- a user friendly system that helps the user manage budgets and their transactions. 
+- And also helps the user plan for the future with transaction forecasting features.
+
 General features that the program has:
 -	Authentication system for the user
 -	System to manage budgets such as add, remove or update budgets
