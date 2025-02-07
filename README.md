@@ -23,3 +23,6 @@ Key optimisations that the program needs to contain:
 -   Program has to be in good modular design
 -   Program needs to have good error handling
 -   Program needs to implement security measures to prevent ddos attacks etc.
+
+Libraries and Translators needed to run the system:
+- Go compiler, python 3 interpreter, node js (all newest version)
