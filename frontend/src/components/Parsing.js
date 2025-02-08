@@ -1,19 +1,22 @@
 export const parseCSVToJSON = (file) => {
-    const lines = file.split("\n")
+    console.log(file)
+    const lines = file.trim().split("\n")
     const transactions = []
     console.log(lines)
 
-    for (let i = 2; i < lines.length; i++) {
+    for (let i = 1; i < lines.length; i++) {
         const row = lines[i].trim().replace(/^,/, "")
         const col = row.split(",").map(i => i.trim())
         const transaction = {
             date: parseDate(col[0]),
-            name: col[1],
-            amount: parseFloat(col[2]),
-            type: col[3].toLowerCase()
+            type: col[1].toLowerCase(),
+            name: col[2],
+            amount: parseFloat(col[3])
         }
         transactions.push(transaction)
     }
+
+    console.log(transactions)
 
     return transactions
 }

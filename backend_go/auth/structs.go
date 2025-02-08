@@ -35,13 +35,7 @@ type Date struct {
 }
 
 type Response struct {
-	Message string
-	StatusCode int
-}
-
-type ResponseJWT struct {
 	Message    string
-	Token      string
 	StatusCode int
 }
 
@@ -50,4 +44,4 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-type AuthenticationHandler struct {}
+type AuthenticationHandler struct{}

@@ -83,6 +83,7 @@ const Forecast = () => {
                 }
             })
             setForecast(response.data.forecast)
+            console.log(response.data)
             setPastTransactions(response.data.total_transactions)
             setRecommendedBudget(response.data.recommended_budget)
         } catch (error) {
@@ -144,7 +145,6 @@ const Forecast = () => {
         },
         scales: {
             y: {
-                beginAtZero: true,
                 title: {
                     display: true,
                     text: "Amount (£)"
@@ -164,7 +164,7 @@ const Forecast = () => {
         <div className="p-20 flex">
             <div className="grid place-content-center">
                 <h1>Forecast</h1>
-                <div className="flex items-center">
+                <div className="grid">
                     <div>
                         {/* Budget Selection */}
                         <select onChange={(e) => handleSelectBudget(e)} value={budget}>
@@ -207,12 +207,17 @@ const Forecast = () => {
                         {item && <button onClick={() => ForecastTransactions()}>Forecast</button>}
                         
                     </div>
-
-                    {pastTransactions?.length > 0 && (
-                        <div className="w-full h-screen">
-                            <Line data={forecastData} options={options} className="p-3"/>
+                    <div className="flex-grow w-full">
+                        <div style={{ height: "calc(100vh - 200px)" }}>
+                        {pastTransactions?.length > 0 && (
+                        <Line
+                            data={forecastData}
+                            options={options}
+                            className="w-full h-full"
+                        />
+                        )}
                         </div>
-                    )}
+                    </div>
                 </div>
                 {forecast.length > 0 && 
                 <div className="flex items-center">

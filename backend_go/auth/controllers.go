@@ -39,7 +39,7 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 	return false, nil
 }
 
-func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
+func (account *Account) SecurityQuestionsValid(db *sql.DB) bool {
 	// queries all security questions by the user in db
 	rows, err := db.Query(`SELECT question, answer FROM Security_Questions 
 	WHERE user_id = ?`, account.UserID)
@@ -61,7 +61,7 @@ func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
 	// check if answers to questions match
 
 	if len(account.Security_Questions) < len(sq) {
-		return false, nil
+		return false
 	}
 
 	// makes a variable to check for matched questions and answers
@@ -79,32 +79,23 @@ func (account *Account) ValidateSecurityQuestions(db *sql.DB) (bool, error) {
 		}
 	}
 
-	return correct == len(sq), nil
+	return correct == len(sq)
 }
-
-// user methods
 
 func GenerateUserID() string {
 	res := uuid.New()
 	return res.String()
 }
 
-func (user *User) ValidateSignUp(db *sql.DB) (bool, error) {
+func UserExists(user User, db *sql.DB) bool {
 	var res bool
 	// checks if user exists
 	query := "SELECT EXISTS(SELECT * FROM user WHERE email = ?)"
-	err := db.QueryRow(query, user.Email).Scan(&res)
-	if err != nil {
-		return false, err
-	}
-	return !res, nil
+	db.QueryRow(query, user.Email).Scan(&res)
+	return res
 }
 
-// user methods
-
-// password handling methods
-
-func (user User) ValidatePassword() bool {
+func (user User) ValidPassword() bool {
 	// check if password has lowercase, uppercase, digits, and special characters
 	check_password :=
 		regexp.MustCompile("[a-z]").MatchString(user.Password) &&
@@ -114,10 +105,6 @@ func (user User) ValidatePassword() bool {
 
 	return check_password
 }
-
-// password handling methods
-
-// parsing methods
 
 func (date *Date) UnmarshalJSON(b []byte) error {
 	s := string(b[1 : len(b)-1])
@@ -130,8 +117,6 @@ func (date *Date) UnmarshalJSON(b []byte) error {
 	date.Time = parsedTime
 	return nil
 }
-
-// parsing methods
 
 var key = []byte("pfftesting")
 
@@ -186,13 +171,10 @@ type ctxkey string
 
 const UserIDkey ctxkey = "user_id"
 
-func GenerateSalt(size int) ([]byte, error) {
+func GenerateSalt(size int) []byte {
 	salt := make([]byte, size)
-	_, err := io.ReadFull(rand.Reader, salt)
-	if err != nil {
-		return nil, err
-	}
-	return salt, nil
+	io.ReadFull(rand.Reader, salt)
+	return salt
 }
 
 func (user *User) HashPassword(salt []byte) {

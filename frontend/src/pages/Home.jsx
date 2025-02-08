@@ -132,7 +132,6 @@ const Home = () => {
     };
 
     const username = localStorage.getItem('username')
-    const [choice, setChoice] = useState()
     const [data, setData] = useState(null)
     const [hasTransactions, setHasTransactions] = useState(true);
 
@@ -145,16 +144,12 @@ const Home = () => {
         return colour;
     }
 
-    const choiceHandler = (e) => {
-        setChoice(e.target.value)
-    }
-
     return (
         <div className="p-20">
             <div className="flex justify-evenly">
                 <h1>Welcome {username}</h1>
             </div>
-            <h1>Summary of transactions {choice}:</h1>
+            <h1>Summary of transactions this month:</h1>
             {hasTransactions ? (
                 data ? (
                     <Bar className="p-20" data={data} options={options} />
@@ -162,12 +157,8 @@ const Home = () => {
                     <p>Loading transactions...</p>
                 )
             ) : (
-            <p>You have made no transactions {choice}</p>
+            <p>You have made no transactions</p>
             )}
-            <select value={choice} onChange={choiceHandler}>
-                <option value="this week">This week</option>
-                <option value="this month">This month</option>
-            </select>
             <div className="flex justify-evenly">
                 <button onClick={(e) => {e.preventDefault(); redirect('/budgets')}}>View budgets</button>
                 <button onClick={(e) => {e.preventDefault(); redirect('/transactions')}}>View transactions</button>

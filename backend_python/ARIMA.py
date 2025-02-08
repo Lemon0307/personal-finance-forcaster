@@ -59,23 +59,54 @@ def ARIMA(data, a, b, months):
 
     return forecast
 
-def estimate_first_ar(difference):
-    previous_values = difference[:-1]
-    current_values = difference[1:]
+# def estimate_first_ar(difference):
+#     previous_values = difference[:-1]
+#     current_values = difference[1:]
 
-    # calculates the r value for the data sets
-    # which is the value of phi
-    phi = np.corrcoef(previous_values, current_values)[0, 1]
+#     # calculates the r value for the data sets
+#     # which is the value of phi
+#     phi = np.corrcoef(previous_values, current_values)[0, 1]
+#     return phi
+
+# def estimate_first_ma(difference, a):
+#     # predict AR component
+#     predicted_ar = np.roll(difference, 1) * a
+
+#     # calculate errors
+#     error = difference - predicted_ar
+#     error = error[1:] # first value doesn't matter so we drop it
+        
+#     # estimate MA coefficient using PCC and calculate the r value
+#     theta = np.corrcoef(error[:-1], error[1:])[0, 1]
+#     return theta
+
+def estimate_first_ar(difference):
+    """ Estimate AR(1) coefficient using Yule-Walker but prevent extreme values. """
+    n = len(difference)
+    if n < 2:
+        return 0  # Avoid errors if not enough data
+
+    y = difference[1:]
+    X = difference[:-1]
+
+    # Solve for phi using least squares
+    phi = np.dot(X, y) / np.dot(X, X)
+
+    # Prevent extreme values that cause sharp drops
+    phi = max(min(phi, 0.9), -0.9)
+
     return phi
 
 def estimate_first_ma(difference, a):
-    # predict AR component
+    """ Estimate MA(1) coefficient using error minimization. """
     predicted_ar = np.roll(difference, 1) * a
-
-    # calculate errors
     error = difference - predicted_ar
-    error = error[1:] # first value doesn't matter so we drop it
-        
-    # estimate MA coefficient using PCC and calculate the r value
-    theta = np.corrcoef(error[:-1], error[1:])[0, 1]
+    error = error[1:]  # Drop the first value
+
+    # Solve for theta using least squares
+    theta = np.dot(error[:-1], error[1:]) / np.dot(error[:-1], error[:-1])
+
+    # Prevent extreme values that amplify trends
+    theta = max(min(theta, 0.9), -0.9)
+
     return theta
