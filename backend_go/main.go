@@ -34,7 +34,7 @@ func main() {
 	routes.ForecastRoutes(mainRouter, &forecast.ForecastHandler{})
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:3000"},
+		AllowedOrigins: []string{"http://127.0.0.1:3000"},
 		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 	})
@@ -42,6 +42,6 @@ func main() {
 	// Apply CORS to the router
 	router_with_cors := c.Handler(router)
 
-	fmt.Println("Server started at http://localhost:8080")
+	fmt.Println("Server started at http://127.0.0.1:8080")
 	http.ListenAndServe(":8080", router_with_cors)
 }

@@ -159,7 +159,8 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 // upgrades the http protocol to websocket
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		return true
+		origin := r.Header.Get("Origin")
+		return origin == "http://127.0.0.1:3000"
 	},
 }
 
@@ -182,6 +183,7 @@ func (auth *AuthenticationHandler) GetCurrentBalance(w http.ResponseWriter, r *h
 	}
 	user_id := claims.UserID
 
+	// upgrade the connection to websocket
 	connection, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -196,6 +198,8 @@ func (auth *AuthenticationHandler) GetCurrentBalance(w http.ResponseWriter, r *h
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// send back json data with current balance
 	err = connection.WriteJSON(map[string]interface{}{
 		"current_balance": current_balance,
 	})
