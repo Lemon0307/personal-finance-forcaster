@@ -23,9 +23,9 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create new manage budget session
-	var manageBudget B_Session
+	var budgets Budget
 	// parse json into structs
-	err = json.NewDecoder(r.Body).Decode(&manageBudget)
+	err = json.NewDecoder(r.Body).Decode(&budgets)
 	if err != nil {
 		fmt.Print(err.Error())
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
@@ -33,33 +33,33 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if budget exists in the database
-	budget_exists := BudgetExists(database.DB, user_id, manageBudget.Budget.BudgetName)
-	if !budget_exists {
+	if BudgetExists(database.DB, user_id, budgets.BudgetName) {
+		// return error message
+		http.Error(w, "A budget with this name already exists.", http.StatusConflict)
+	} else {
 		// add budget
 		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
-			user_id, manageBudget.Budget.BudgetName)
+			user_id, budgets.BudgetName)
 		if err != nil {
 			log.Fatal(err)
 		}
 		// add all budget items
-		for i := 0; i < len(manageBudget.Items); i++ {
-			// check if budget item exists
-
-			if !ItemExists(database.DB, user_id, manageBudget.Items[i].ItemName,
-				manageBudget.Budget.BudgetName) {
+		for i := 0; i < len(budgets.Items); i++ {
+			if !ItemExists(database.DB, user_id, budgets.Items[i].ItemName,
+				budgets.BudgetName) { // add item if item does not exist
 				_, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
 				item_name, description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
 					user_id,
-					manageBudget.Budget.BudgetName,
-					manageBudget.Items[i].ItemName,
-					manageBudget.Items[i].Description,
-					manageBudget.Items[i].BudgetCost,
-					manageBudget.Items[i].Priority)
+					budgets.BudgetName,
+					budgets.Items[i].ItemName,
+					budgets.Items[i].Description,
+					budgets.Items[i].BudgetCost,
+					budgets.Items[i].Priority)
 				if err != nil {
 					log.Fatal(err)
 				}
 			} else {
-				http.Error(w, `Budget item with name `+manageBudget.Items[i].ItemName+
+				http.Error(w, `Budget item with name `+budgets.Items[i].ItemName+
 					`already exists`, http.StatusConflict)
 			}
 		}
@@ -75,9 +75,6 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
 			return
 		}
-	} else {
-		// return error message
-		http.Error(w, "A budget with this name already exists.", http.StatusConflict)
 	}
 }
 
@@ -92,11 +89,11 @@ func (budget *BudgetHandler) AddItem(w http.ResponseWriter, r *http.Request) {
 	}
 	budget_name := vars["budget_name"]
 
-	// create a new add budget item session
-	var session Items
+	// create a new add budget item budget
+	var item Items
 
 	// parse json into structs
-	err = json.NewDecoder(r.Body).Decode(&session)
+	err = json.NewDecoder(r.Body).Decode(&item)
 	if err != nil {
 		fmt.Print(err.Error())
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
@@ -104,16 +101,19 @@ func (budget *BudgetHandler) AddItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check if item already exists in the database
-	if !ItemExists(database.DB, user_id, session.ItemName, budget_name) {
+	if ItemExists(database.DB, user_id, item.ItemName, budget_name) {
+		// return error message
+		http.Error(w, "An item with this name already exists.", http.StatusConflict)
+	} else {
 		// add budget item to the database
 		_, err = database.DB.Exec(`INSERT INTO Budget_Items (item_name, budget_name, user_id, 
 		description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
-			session.ItemName,
+			item.ItemName,
 			budget_name,
 			user_id,
-			session.Description,
-			session.BudgetCost,
-			session.Priority)
+			item.Description,
+			item.BudgetCost,
+			item.Priority)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -129,9 +129,6 @@ func (budget *BudgetHandler) AddItem(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
 			return
 		}
-	} else {
-		// return error message
-		http.Error(w, "A budget item with this name already exists.", http.StatusConflict)
 	}
 }
 
@@ -156,46 +153,44 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	var budgets = make(map[string]*B_Session)
+	var budgets = make(map[string]*Budget)
 
 	for rows.Next() {
 		var user_id string
-		var budget Budget
 		var item Items
 		// handle budget items and their possible null values
-		var itemName sql.NullString
-		var budgetCost sql.NullFloat64
+		var budget_name string
+		var item_name sql.NullString
+		var budget_cost sql.NullFloat64
 		var description sql.NullString
 		var priority sql.NullInt32
 
 		// Scan values from the query result
-		if err := rows.Scan(&user_id, &budget.BudgetName, &itemName,
-			&budgetCost, &description, &priority); err != nil {
+		if err := rows.Scan(&user_id, &budget_name, &item_name,
+			&budget_cost, &description, &priority); err != nil {
 			log.Fatal(err)
 		}
 
 		// Check if this budget has already been processed
-		if _, budget_exists := budgets[budget.BudgetName]; !budget_exists {
-			budgets[budget.BudgetName] = &B_Session{
-				Budget: Budget{
-					BudgetName: budget.BudgetName,
-				},
-				Items: []*Items{},
+		if _, budget_exists := budgets[budget_name]; !budget_exists {
+			budgets[budget_name] = &Budget{
+				BudgetName: budget_name,
+				Items:      []*Items{},
 			}
 		}
 
 		// check if any value in the budget item is null
-		if !itemName.Valid || !budgetCost.Valid || !description.Valid || !priority.Valid {
+		if !item_name.Valid || !budget_cost.Valid || !description.Valid || !priority.Valid {
 			// append a null value into budget items
-			budgets[budget.BudgetName].Items = append(budgets[budget.BudgetName].Items, nil)
+			budgets[budget_name].Items = append(budgets[budget_name].Items, nil)
 		} else {
 			// set variables to corresponding budget item values
-			item.ItemName = itemName.String
-			item.BudgetCost = budgetCost.Float64
+			item.ItemName = item_name.String
+			item.BudgetCost = budget_cost.Float64
 			item.Description = description.String
 			item.Priority = priority.Int32
 			// append the object to the budget items array
-			budgets[budget.BudgetName].Items = append(budgets[budget.BudgetName].Items, &Items{
+			budgets[budget_name].Items = append(budgets[budget_name].Items, &Items{
 				ItemName:    item.ItemName,
 				BudgetCost:  item.BudgetCost,
 				Description: item.Description,
@@ -204,8 +199,8 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Convert map to an array of B_Session
-	var budgets_array []B_Session
+	// Convert map to an array of Budget
+	var budgets_array []Budget
 	for _, budget := range budgets {
 		budgets_array = append(budgets_array, *budget)
 	}
@@ -291,24 +286,18 @@ func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	var manageBudget B_Session
-	err = json.NewDecoder(r.Body).Decode(&manageBudget)
+	var budgets Budget
+	err = json.NewDecoder(r.Body).Decode(&budgets)
 	if err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
 	// sql query to update budget in the database
-	update_budget, err := database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
-	budget_name = ? AND user_id = ?`, manageBudget.Budget.BudgetName, budget_name, user_id)
+	_, err = database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
+	budget_name = ? AND user_id = ?`, budgets.BudgetName, budget_name, user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
-	rowsAffected, err := update_budget.RowsAffected()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("Rows affected: %d\n", rowsAffected)
 
 	// success message
 	response := Response{
@@ -332,8 +321,8 @@ func (budget *BudgetHandler) UpdateItem(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var item Items
-	_ = json.NewDecoder(r.Body).Decode(&item)
+	var items Items
+	_ = json.NewDecoder(r.Body).Decode(&items)
 
 	// building query string
 	query := "UPDATE Budget_Items SET"
@@ -341,17 +330,17 @@ func (budget *BudgetHandler) UpdateItem(w http.ResponseWriter, r *http.Request) 
 	columns := []string{}
 
 	// check if conditions exist
-	if item.BudgetCost != 0 {
+	if items.BudgetCost != 0 {
 		columns = append(columns, "budget_cost = ?")
-		args = append(args, item.BudgetCost)
+		args = append(args, items.BudgetCost)
 	}
-	if item.Description != "" {
+	if items.Description != "" {
 		columns = append(columns, "description = ?")
-		args = append(args, item.Description)
+		args = append(args, items.Description)
 	}
-	if item.Priority != 0 {
+	if items.Priority != 0 {
 		columns = append(columns, "priority = ?")
-		args = append(args, item.Priority)
+		args = append(args, items.Priority)
 	}
 
 	if len(columns) > 0 {
@@ -378,5 +367,4 @@ func (budget *BudgetHandler) UpdateItem(w http.ResponseWriter, r *http.Request) 
 		// return error message
 		http.Error(w, "There are no updates to the budget item", http.StatusNotModified)
 	}
-
 }

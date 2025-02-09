@@ -160,6 +160,7 @@ func ValidateJWT(token_string string) (*Claims, error) {
 		return nil, fmt.Errorf("invalid token")
 	}
 
+	// error message if token is not valid
 	if !token.Valid {
 		return nil, fmt.Errorf("invalid token")
 	}

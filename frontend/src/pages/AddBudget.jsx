@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 const AddBudget = () => {
     
     const redirect = useNavigate();
-    const [budget, setBudget] = useState({budget_name: ""})
+    const [budgetName, setBudgetName] = useState("")
     const token = localStorage.getItem("token")
     const [items, setItems] = useState([{
             item_name: "",
@@ -23,9 +23,7 @@ const AddBudget = () => {
     }, [token, redirect])
 
     const handleSubmit = async () => {
-        const details = {budget: budget, items: items}
-        console.log(budget)
-        console.log(items)
+        const details = {budget_name: budgetName, items: items}
         await axios.post("http://localhost:8080/main/budgets/add_budget", details, {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -39,8 +37,8 @@ const AddBudget = () => {
     }
 
     const handleBudgetChange = (e) => {
-        const {name, value} = e.target;
-        setBudget({[name]: value})
+        const {value} = e.target;
+        setBudgetName(value)
     }
     
     const handleItemChange = (e, index) => {

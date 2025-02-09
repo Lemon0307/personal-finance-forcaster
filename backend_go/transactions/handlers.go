@@ -23,7 +23,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 		return
 	}
 
-	// decodes json into session
+	// decodes json into transaction
 	var session T_Session
 	err = json.NewDecoder(r.Body).Decode(&session)
 	if err != nil {

@@ -7,9 +7,7 @@ import { quickSort } from "../components";
 const Budgets = () => {
     const redirect = useNavigate()
     const [budgets, setBudgets] = useState([])
-    const [updateBudget, setUpdateBudget] = useState({
-        budget: {budget_name: ""}
-    })
+    const [updateBudget, setUpdateBudget] = useState("")
     const [updateItem, setUpdateItem] = useState({
 
     })
@@ -57,16 +55,15 @@ const Budgets = () => {
     }
 
     const handleSort = (e) => {
-        setBudgets((previousBudgets) => {
-            previousBudgets &&
+        const key = e.target.value;
+        setBudgets((previousBudgets) =>
             previousBudgets.map((budget) => ({
                 ...budget,
-                items: quickSort(budget.items, e.target.value),
-            }))            
-        }
-
+                items: quickSort([...budget.items], key), // Ensure items array is copied
+            }))
         );
-    }
+    };
+    
 
     const handleSubmit = async (budget_index, budget_name) => {
         const budget_to_add = budgets[budget_index]
@@ -200,14 +197,14 @@ const Budgets = () => {
                                         budget_name: e.target.value
                                     }
                                 })}}
-                                onKeyDown={(e) => handleUpdateBudget(b.budget.budget_name, e)}
+                                onKeyDown={(e) => handleUpdateBudget(b.budget_name, e)}
                                 className="py-2"
                                 required
                                 />
-                                : <h1 onClick={() => setIsEditingBudget(true)}>{b.budget.budget_name}</h1>}
+                                : <h1 onClick={() => setIsEditingBudget(true)}>{b.budget_name}</h1>}
                                 <div>
                                     <button className="px-2.5"
-                                    onClick={() => handleRemoveBudget(b.budget.budget_name)}>Remove Budget</button>
+                                    onClick={() => handleRemoveBudget(b.budget_name)}>Remove Budget</button>
                                 </div>
                             </div>
                         <div key={indexB} className="flex justify-normal">
@@ -227,7 +224,7 @@ const Budgets = () => {
                                     <td className="px-5">{bi.description}</td>
                                     <td>
                                         <button
-                                        onClick={() => handleRemoveItem(b.budget.budget_name, bi.item_name)}
+                                        onClick={() => handleRemoveItem(b.budget_name, bi.item_name)}
                                         ><FaMinus color="grey"/>
                                         </button>
                                     </td>
@@ -278,7 +275,7 @@ const Budgets = () => {
                                                     <FaTimes />
                                                 </button>
                                                 <button onClick={(e) => 
-                                                    handleUpdateItem(b.budget.budget_name, bi.item_name, e)}>
+                                                    handleUpdateItem(b.budget_name, bi.item_name, e)}>
                                                     <FaPlus />
                                                 </button>
                                             </td>
@@ -325,7 +322,7 @@ const Budgets = () => {
                                     onChange={(e) => handleItemChange(indexB, e)}/>
                                 </td>
                                 <td>
-                                    <button onClick={() => handleSubmit(indexB, b.budget.budget_name)}>
+                                    <button onClick={() => handleSubmit(indexB, b.budget_name)}>
                                         <FaPlus color="grey"/>    
                                     </button>
                                 </td>
