@@ -1,5 +1,4 @@
 const quickSort = (array, key) => {
-    console.log(array)
     if (array.length <= 1) return array;
 
     const pivot = array[Math.floor(array.length / 2)];
