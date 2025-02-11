@@ -46,7 +46,7 @@ const Forecast = () => {
     ])
 
     const token = localStorage.getItem("token")
-    const selectedBudgetData = budgetData.find(bd => bd.budget.budget_name === budget);
+    const selectedBudgetData = budgetData.find(bd => bd.budget_name === budget);
 
     useEffect(() => {
         const GetBudgets = async () => {
@@ -171,8 +171,8 @@ const Forecast = () => {
                             <option value="" disabled>Select Budget...</option>
                             {budgetData.length > 0 ? (
                                 budgetData.map((bd, index) => (
-                                    <option key={index} value={bd.budget.budget_name}>
-                                        {bd.budget.budget_name}
+                                    <option key={index} value={bd.budget_name}>
+                                        {bd.budget_name}
                                     </option>
                                 ))
                             ) : (

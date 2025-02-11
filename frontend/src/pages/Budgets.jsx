@@ -235,7 +235,7 @@ const Budgets = () => {
                                     </td>
                                     <td>
                                         <button onClick={(e) => {e.preventDefault(); redirect(
-                                            `/transactions/${b.budget.budget_name}/${bi.item_name}`)}}>
+                                            `/transactions/${b.budget_name}/${bi.item_name}`)}}>
                                             View Transactions
                                         </button>
                                     </td>
