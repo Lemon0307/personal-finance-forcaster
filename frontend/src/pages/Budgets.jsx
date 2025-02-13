@@ -25,6 +25,7 @@ const Budgets = () => {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
+                console.log(response.data)
                 setBudgets(response?.data?.map((budget) => ({
                     ...budget,
                     new_item: { item_name: "", budget_cost: 0, description: "", priority: 0 },

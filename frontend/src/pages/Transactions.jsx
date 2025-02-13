@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams, useNavigate } from 'react-router-dom'
 import axios from "axios"
 import { FaPlus, FaMinus} from 'react-icons/fa'
@@ -8,7 +8,8 @@ import { parseCSVToJSON } from "../components/Parsing.js"
 
 const Transactions = () => {
     const redirect = useNavigate()
-    const [sort, setSort] = useState()
+    let sort = useRef()
+    let order = useRef()
     const {item_name, budget_name} = useParams()
     const [transactions, setTransactions] = useState([
         {
@@ -119,9 +120,9 @@ const Transactions = () => {
         })
     }
     
-    const handleSort = (e) => {
+    const handleSort = () => {
         setTransactions((previousTransactions) => (
-            previousTransactions = quickSort(previousTransactions, e.target.value)
+            previousTransactions = quickSort(previousTransactions, sort, order)
         ));
     }
 
@@ -191,12 +192,17 @@ const Transactions = () => {
         <div className="p-20 flex">
             <div className="px-10">
                 <h1>Sort by:</h1>
-                <select value={sort} onChange={handleSort}>
+                <select value={sort} onChange={(e) => (sort = e.target.value)}>
                     <option value="name">Name</option>
                     <option value="type">Type</option>
                     <option value="amount">Amount</option>
                     <option value="date">Date</option>
                 </select>
+                <select value={order} onChange={(e) => (order = e.target.value)}>
+                    <option value="asc">Ascending</option>
+                    <option value="desc">Descending</option>
+                </select>
+                <button onClick={handleSort}>Sort</button>
             </div>
             <div className="grid place-content-center">
                 <div className="flex justify-evenly">
