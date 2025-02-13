@@ -8,8 +8,8 @@ import { parseCSVToJSON } from "../components/Parsing.js"
 
 const Transactions = () => {
     const redirect = useNavigate()
-    let sort = useRef()
-    let order = useRef()
+    const [sort, setSort] = useState("name")
+    const [order, setOrder] = useState("asc")
     const {item_name, budget_name} = useParams()
     const [transactions, setTransactions] = useState([
         {
@@ -124,6 +124,7 @@ const Transactions = () => {
         setTransactions((previousTransactions) => (
             previousTransactions = quickSort(previousTransactions, sort, order)
         ));
+        console.log(transactions)
     }
 
     const handleMonthYearChange = (e) => {
@@ -192,13 +193,13 @@ const Transactions = () => {
         <div className="p-20 flex">
             <div className="px-10">
                 <h1>Sort by:</h1>
-                <select value={sort} onChange={(e) => (sort = e.target.value)}>
+                <select value={sort.current} onChange={(e) => setSort(e.target.value)}>
                     <option value="name">Name</option>
                     <option value="type">Type</option>
                     <option value="amount">Amount</option>
                     <option value="date">Date</option>
                 </select>
-                <select value={order} onChange={(e) => (order = e.target.value)}>
+                <select value={order.current} onChange={(e) => setOrder(e.target.value)}>
                     <option value="asc">Ascending</option>
                     <option value="desc">Descending</option>
                 </select>

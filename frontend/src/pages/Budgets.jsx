@@ -16,21 +16,22 @@ const Budgets = () => {
     const token = localStorage.getItem('token')
 
     useEffect(() => {
+        // logout user if token is missing
         if (token === null) {
             redirect('/login')
         }
         const getBudgets = async () => {
+            // get all budgets by the user
             await axios.get("http://localhost:8080/main/budgets", {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
-            }).then(response => {
-                console.log(response.data)
+            }).then(response => { // group json data into the budgets constant
                 setBudgets(response?.data?.map((budget) => ({
                     ...budget,
                     new_item: { item_name: "", budget_cost: 0, description: "", priority: 0 },
                 })));
-            }).catch(error => {
+            }).catch(error => { // return error message
                 alert(error.response?.data || error.message)
             })
         }
@@ -55,21 +56,28 @@ const Budgets = () => {
         );
     }
 
+    const handleUpdateItemChange = (e) => {
+        const {name, value} = e.target
+        setUpdateItem(previousItem => ({
+            ...previousItem,
+            [name]: value
+        }))
+    }
+
     const handleSort = (e) => {
         const key = e.target.value;
         setBudgets((previousBudgets) =>
             previousBudgets.map((budget) => ({
                 ...budget,
-                items: quickSort([...budget.items], key), // Ensure items array is copied
+                items: quickSort([...budget.items], key), // sorts items by key to sort by
             }))
         );
     };
     
 
     const handleSubmit = async (budget_index, budget_name) => {
-        const budget_to_add = budgets[budget_index]
-        
-        const { new_item } = budget_to_add;
+        // get new item to add from budgets array
+        const { new_item } = budgets[budget_index];
         new_item.budget_name = budget_name
         let ok = true;
         for (const key in new_item) {
@@ -82,90 +90,89 @@ const Budgets = () => {
             alert("Please fill in all the required details.");
             return;
         }
-        const reqData = {
+        const request_data = {
             ...new_item,
+            // convert budget cost and priority into numbers
             budget_cost: parseFloat(new_item.budget_cost),
             priority: parseFloat(new_item.priority)
         }
-        console.log(reqData)
 
-        await axios.post(`http://localhost:8080/main/budgets/add_item/${new_item.budget_name}`, reqData, {
+        // create the item in the database
+        await axios.post(`http://localhost:8080/main/budgets/add_item/${new_item.budget_name}`,
+        request_data, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         }).then(
-            response => {
+            response => { // show the user the response message
                 alert(response.data.Message)
                 window.location.reload();
             }
-        ).catch(error => {
+        ).catch(error => { // return error message
             alert(error.response?.data || error.message)
-        })            
+        })
     }
 
     const handleUpdateBudget = async (budget_name, e) => {
         if (e.key === "Enter") {
             setIsEditingBudget(false)
+            
+            // update budget in the database
             await axios.put(`http://localhost:8080/main/budgets/update_budget/${budget_name}`, 
                 updateBudget, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
-            }).then(response => {
+            }).then(response => { // return response message
                 alert(response.data.Message)
                 window.location.reload()
-            }).catch(error => {
+            }).catch(error => { // return error message
                 alert(error.response?.data || error.message)
-            })      
+            })
         }
     }
 
     const handleUpdateItem = async (budget_name, item_name) => {
+        // convert budget cost and priority into numbers
         updateItem.budget_cost = parseFloat(updateItem.budget_cost)
         updateItem.priority = parseInt(updateItem.priority)
         console.log(JSON.stringify(updateItem))
+        
+        // update item in the database
         await axios.put(`http://localhost:8080/main/budgets/update_item/${budget_name}/${item_name}`,
             updateItem, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             }
-        ).then(response => {
-            window.location.reload()
-        }).catch(error => {
+        ).then(window.location.reload()) // refresh screen
+        .catch(error => { // return error message
             alert(error.response?.data || error.message)
         })
     }
 
-    const handleUpdateItemChange = (e) => {
-        const {name, value} = e.target
-        setUpdateItem(previousItem => ({
-            ...previousItem,
-            [name]: value
-        }))
-    }
-
     const handleRemoveBudget = async (budget_name) => {
+        // delete budget from the database
         await axios.delete(`http://localhost:8080/main/budgets/remove_budget/${budget_name}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
-        }).then(response => {
+        }).then(response => { // return response message
             alert(response.data.Message)
             window.location.reload();
-        }).catch(error => {
+        }).catch(error => { // return error message
             alert(error.response?.data || error.message)
         })
     }
 
     const handleRemoveItem = async (budget_name, item_name) => {
+        // delete item from the database
         await axios.delete(`http://localhost:8080/main/budgets/remove_item/${budget_name}/${item_name}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
-        }).then(response => {
-            window.location.reload();
-        }).catch(error => {
+        }).then(window.location.reload()) // refresh screen
+        .catch(error => { // return error message
             alert(error.response?.data || error.message)
         })
     }

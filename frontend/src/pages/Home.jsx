@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Line, Bar } from "react-chartjs-2";
+import { Bar } from "react-chartjs-2";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -22,83 +22,12 @@ ChartJS.register(
   );
 
 const Home = () => {
-
     let redirect = useNavigate()
     const token = localStorage.getItem('token')
-    useEffect(() => {
-        if (token === null) {
-            redirect('/login')
-        }
-        
-        const getTransactions = async () => {
-            let date = new Date()
-            try {
-                const response = await axios.get(`http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+    const username = localStorage.getItem('username')
+    const [data, setData] = useState(null)
 
-                if (!Array.isArray(response.data) || response.data.length === 0) {
-                    setHasTransactions(false);
-                    setData(null);
-                    return;
-                }
-    
-                const groupedData = response.data.reduce((acc, budget) => {
-                    const budgetName = budget.item.budget_name;
-                    const itemName = budget.item.item_name;
-                    const transactionAmount = budget.transactions ? budget.transactions.reduce((sum, transaction) => sum + transaction.amount, 0) : 0;
-
-                    if (!acc[budgetName]) {
-                        acc[budgetName] = {};
-                    }
-    
-                    // Store transaction counts for each item under a budget
-                    acc[budgetName][itemName] = transactionAmount;
-    
-                    return acc;
-                }, {});
-
-            // Get unique budget names and item names
-            const budgetNames = Object.keys(groupedData);
-            const allItemNames = new Set();
-            budgetNames.forEach(budget => {
-                Object.keys(groupedData[budget]).forEach(item => {
-                    allItemNames.add(item);
-                });
-            });
-
-            const itemNames = Array.from(allItemNames);  // Convert set to array
-
-            // Prepare data for chart
-            const labels = budgetNames;  // X-axis will have budget names
-            const datasets = itemNames.map(itemName => {
-                return {
-                    label: itemName,
-                    data: budgetNames.map(budget => groupedData[budget][itemName] || 0), // For each budget, get the count for this item
-                    backgroundColor: getRandomColour(),
-                    borderColor: getRandomColour(),
-                    borderWidth: 1,
-                };
-            });
-
-            const chartData = {
-                labels: labels,  // X-axis: Budget Names
-                datasets: datasets,  // Y-axis: Transaction counts for each item
-            };
-
-            setHasTransactions(true);
-            setData(chartData);  // Set chart data for rendering
-    
-            } catch (error) {
-                alert(error.response?.data || error.message);
-            }
-        }
-    
-        getTransactions();
-    }, [redirect, token]);
-
+    // transactions charts options
     const options = {
         responsive: true,
         plugins: {
@@ -131,9 +60,71 @@ const Home = () => {
         }
     };
 
-    const username = localStorage.getItem('username')
-    const [data, setData] = useState(null)
-    const [hasTransactions, setHasTransactions] = useState(true);
+    useEffect(() => {
+        // logout user if token is missing
+        if (token === null) {
+            redirect('/login')
+        }
+        
+        const getTransactions = async () => {
+            let date = new Date()
+            // get transactions of the current month
+            await axios.get(`http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                if (response.data && (Array.isArray(response.data) || response.data.length > 0)) { // check if there are transactions in the response
+                    // reduce the response into a single object
+                    const budgetData = response.data.reduce((acc, budget) => {
+                        const budget_name = budget.item.budget_name;
+                        const item_name = budget.item.item_name;
+                        // sums all transactions in the transaction array, if there isn't any in the array then return zero
+                        const total_amount = budget.transactions?.reduce((sum, transaction) => sum + transaction.amount, 0) ?? 0;
+
+                        acc[budget_name] ??= {}
+                        // store total transaction amount in each item
+                        acc[budget_name][item_name] = total_amount;
+        
+                        return acc;
+                    }, {});
+
+                    // get all budgets
+                    const all_budgets = Object.keys(budgetData);
+                    // get all unique items
+                    const all_items = new Set();
+                    all_budgets.forEach(budget => {
+                        Object.keys(budgetData[budget]).forEach(item => {
+                            all_items.add(item);
+                        });
+                    });
+                    // convert to array
+                    const item_names = Array.from(all_items);
+
+                    // perpare chart data
+                    const labels = all_budgets;  // labels x-axis
+                    const datasets = item_names.map(item_name => { // labels y-axis
+                        return {
+                            label: item_name,
+                            data: all_budgets.map(budget => budgetData[budget][item_name]),
+                            backgroundColor: getRandomColour()
+                        };
+                    });
+
+                    // group x and y axis to form the chart
+                    const chartData = {
+                        labels: labels,
+                        datasets: datasets,
+                    };
+                    setData(chartData)
+                }
+            }).catch(error => { // return error message
+                alert(error.response?.data || error.message);
+            })
+        }
+        getTransactions();
+    }, [redirect, token]);
 
     const getRandomColour = () => {
         const letters = '0123456789ABCDEF';
@@ -149,15 +140,11 @@ const Home = () => {
             <div className="flex justify-evenly">
                 <h1>Welcome {username}</h1>
             </div>
-            <h1>Summary of transactions this month:</h1>
-            {hasTransactions ? (
-                data ? (
-                    <Bar className="p-20" data={data} options={options} />
-                ) : (
-                    <p>Loading transactions...</p>
-                )
+            <h1>Summary of transactions this month:</h1>{
+            data ? (
+                <Bar className="p-20" data={data} options={options} />
             ) : (
-            <p>You have made no transactions</p>
+                <p>You have made no transactions</p>
             )}
             <div className="flex justify-evenly">
                 <button onClick={(e) => {e.preventDefault(); redirect('/budgets')}}>View budgets</button>
