@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_restful import Api, Resource
-from ARIMA import forecast
+from forecast import forecast, mean_value
 import numpy as np
 from flask_cors import CORS, cross_origin
 
@@ -59,23 +59,11 @@ class Forecast(Resource):
                 'Year': forecast_year,
                 'TotalAmount': forecasted_transactions[i],
             })
-
         #combine the original transactions with the forecast
         combined_transactions = np.concatenate((transactions, forecasted_transactions))
 
-        #approximating the original and forecasted transactions as a polynomial
-        x = np.arange(len(combined_transactions))
-        coefficients = np.polyfit(x, combined_transactions, deg=7)
-        fitted_poly = np.poly1d(coefficients)
-
-        #integrate the polynomial
-        integral = np.polyint(fitted_poly)
-        first = x[0]
-        last = x[-1]
-
-        #calculate the mean value of the transactions and set it as recommended budget
-        mean_value = (integral(last) - integral(first)) / (last - first)
-        recommended = mean_value
+        # calculate the recommended budget
+        recommended = mean_value(combined_transactions)
 
         return jsonify({
             'total_transactions': jsonData,
