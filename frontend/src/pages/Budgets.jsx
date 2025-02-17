@@ -75,7 +75,7 @@ const Budgets = () => {
     };
     
 
-    const handleSubmit = async (budget_index, budget_name) => {
+    const handleAddBudgetItem = async (budget_index, budget_name) => {
         // get new item to add from budgets array
         const { new_item } = budgets[budget_index];
         new_item.budget_name = budget_name
@@ -86,6 +86,7 @@ const Budgets = () => {
             }
         }
 
+        // return error message if not all details are filled
         if (!ok) {
             alert("Please fill in all the required details.");
             return;
@@ -97,7 +98,7 @@ const Budgets = () => {
             priority: parseFloat(new_item.priority)
         }
 
-        // create the item in the database
+        // send a request to create item in the database
         await axios.post(`http://localhost:8080/main/budgets/add_item/${new_item.budget_name}`,
         request_data, {
             headers: {
@@ -330,7 +331,7 @@ const Budgets = () => {
                                     onChange={(e) => handleItemChange(indexB, e)}/>
                                 </td>
                                 <td>
-                                    <button onClick={() => handleSubmit(indexB, b.budget_name)}>
+                                    <button onClick={() => handleAddBudgetItem(indexB, b.budget_name)}>
                                         <FaPlus color="grey"/>    
                                     </button>
                                 </td>
