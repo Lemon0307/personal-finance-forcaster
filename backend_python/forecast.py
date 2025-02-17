@@ -4,7 +4,7 @@ from scipy.stats import boxcox
 from statsmodels.tsa.arima.model import ARIMA
 from scipy.special import inv_boxcox
 
-def forecast(data, months):
+def forecast(data, months, p, d, q):
     # turns the data into a series
     data = pd.Series(data)
     # applies the boxcox transform to stationarise data
@@ -12,10 +12,13 @@ def forecast(data, months):
     # difference the data for further stationarity
     differenced_data = pd.Series(stationary_data).diff().dropna()
     # build and apply the ARIMA model for forecasting
-    model = ARIMA(stationary_data, order=(12, 1, 12)).fit()
-    boxcox_forecasts = model.forecast(steps=months)
+    model = ARIMA(differenced_data, order=(p, d, q)).fit()
+    differenced_forecasts = model.forecast(steps=months)
+    #reverse differencing
+    last = stationary_data[-1]
+    forecasted_stationary = np.r_[last, differenced_forecasts].cumsum()[1:]
     #apply inverse boxcox to revert the data back
-    forecasted_values = inv_boxcox(boxcox_forecasts, lam)
+    forecasted_values = inv_boxcox(forecasted_stationary, lam)
 
     return forecasted_values
 

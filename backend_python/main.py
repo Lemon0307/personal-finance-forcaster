@@ -30,7 +30,7 @@ class Forecast(Resource):
             dates.append({'month': month, 'year': year})
         
         # forecast transactions
-        forecasted_transactions = forecast(transactions, int(months))
+        forecasted_transactions = forecast(transactions, int(months), 12, 1, 12)
 
         if np.array_equal(np.array(forecasted_transactions), np.array([-1])):
             error = jsonify({
