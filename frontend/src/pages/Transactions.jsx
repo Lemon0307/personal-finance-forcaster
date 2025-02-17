@@ -8,9 +8,12 @@ import { parseCSVToJSON } from "../components/Parsing.js"
 
 const Transactions = () => {
     const redirect = useNavigate()
+    // sort options
     const [sort, setSort] = useState("name")
     const [order, setOrder] = useState("asc")
+    // stores the item name and budget name of transactions
     const {item_name, budget_name} = useParams()
+    // stores the list of transactions by the user
     const [transactions, setTransactions] = useState([
         {
             transaction_id: "",
@@ -20,8 +23,10 @@ const Transactions = () => {
             date: ""
         }
     ])
+    // stores the csv file to be imported
     const [csvFile, setCSVfile] = useState()
 
+    // stores data of new transaction to be added
     const [newTransaction, setNewTransaction] = useState({
         name: "",
         type: "",
@@ -33,7 +38,7 @@ const Transactions = () => {
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear()
     })
-    
+
     const [dateString, setDateString] = useState(() => {
         const date_now = new Date()
         return `${date_now.getFullYear()}-${String(date_now.getMonth() + 1).padStart(2, "0")}`
@@ -46,15 +51,16 @@ const Transactions = () => {
             redirect('/login')
         }
         const getTransactions = async () => {
-            console.log(date)
+            // send request to get transactions from the user of the current month year
             await axios.get(`http://localhost:8080/main/transactions/${budget_name}/${item_name}/${date.year}/${date.month}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
+                // store response data in the transactions state
                 setTransactions(response.data.transactions)
-                console.log(response.data.transactions)
             }).catch(error => {
+                // show error message
                 alert(error.response?.data || error.message)
             })
         }
@@ -70,19 +76,20 @@ const Transactions = () => {
         }))
     }
 
-    const handleSubmit = async () => {
+    const handleAddTransaction = async () => {
         let ok = true
-        for (const key in newTransaction) {
+        for (const key in newTransaction) { // checks if each required detail is entered
             if (typeof newTransaction[key] === "string" && newTransaction[key].trim().length === 0) {
                 ok = false;
             }
         }
 
-        if (!ok) {
+        if (!ok) { // shows error message if not all details are entered
             alert("Please fill in all the required details.");
             return;
         }
-        const reqData = {
+        // gather all transaction data
+        const requestData = {
             item: {
                 budget_name: budget_name,
                 item_name: item_name
@@ -91,40 +98,38 @@ const Transactions = () => {
                     amount: parseFloat(newTransaction.amount)                           
             }]
         }
-        console.log(reqData)
-        await axios.post("http://localhost:8080/main/transactions/add_transaction", reqData, {
+        // sends request to add a transaction to the database
+        await axios.post("http://localhost:8080/main/transactions/add_transaction", requestData, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
-        }).then(response => {
-            console.log(response.data.Message)
-            setTransactions(prev => Array.isArray(prev) ? [...prev, newTransaction] : [newTransaction]);
-            
-        }).catch(error => {
+        }).then( // appends the new transaction to the transactions state
+            setTransactions(prev => Array.isArray(prev) ? [...prev, newTransaction] : [newTransaction]) 
+        ).catch(error => {
+            // show error message
             alert(error.response?.data || error.message)
         })
     }
 
     const handleRemoveTransaction = async (transaction_id) => {
-        console.log(transaction_id)
+        // send request to delete transaction from the database
         await axios.delete(`http://localhost:8080/main/transactions/${date.year}/${date.month}/${budget_name}/${item_name}/remove_transaction/${transaction_id}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         })
-        .then(response => {
-            console.log(response.data.Message)
-            setTransactions(prev => prev.filter(transaction => transaction.transaction_id !== transaction_id));
-        }).catch(error => {
+        .then( // removes transaction from transactions state
+            setTransactions(prev => prev.filter(transaction => transaction.transaction_id !== transaction_id))
+        ).catch(error => {
             alert(error.response?.data || error.message)
         })
     }
     
     const handleSort = () => {
         setTransactions((previousTransactions) => (
+            // run quicksort on transactions
             previousTransactions = quickSort(previousTransactions, sort, order)
         ));
-        console.log(transactions)
     }
 
     const handleMonthYearChange = (e) => {
@@ -138,24 +143,30 @@ const Transactions = () => {
     }
 
     const handleExportCSV = () => {
+        // does nothing if there are no transactions
         if (!transactions) {
             return;
         }
+        // sets the headers of the csv as the keys of the transactions
         const headers = Object.keys(transactions[0])
         const rows = transactions.map(transaction => {
             return headers.map(header => transaction[header]).join(",")
         })
+        // combines headers and rows to make the file
         const file = [headers.join(","), ...rows].join("\n")
         const blob = new Blob([file], {type: "text/csv"})
+        // download the file for the user
         const link = document.createElement("a")
         link.href = URL.createObjectURL(blob)
+        // file name is MM-YYYY-item_name-budget_name
         link.download = `${date.month}-${date.year}-${item_name}-${budget_name}`
         link.click()
     }
 
     const handleImportCSV = () => {
         const reader = new FileReader()
-
+        
+        reader.readAsText(csvFile);
         reader.onload = async () => {
             const csv = reader.result
             const transactions = parseCSVToJSON(csv)
@@ -171,22 +182,18 @@ const Transactions = () => {
                     year: new Date().getFullYear()
                 }
             }
-
-            try {
-                console.log(importData)
-                const response = await axios.post(`http://localhost:8080/main/transactions/add_transaction`, 
+            await axios.post(`http://localhost:8080/main/transactions/add_transaction`, 
                     importData,
                     {
                     headers: {
                         Authorization: `Bearer ${token}`
                     }
+                }).then(response => {
+                    alert(response.data.Message)
+                }).catch(error => {
+                    alert(error.response?.data)     
                 })
-                alert(response.data.Message)
-            } catch (error) {
-                alert(error.response?.data)
             }
-        }
-        reader.readAsText(csvFile);
     }
 
     return (
@@ -274,7 +281,7 @@ const Transactions = () => {
                         onChange={(e) => handleTransactionChange(e)}/>
                     </td>
                     <td>
-                        <button onClick={() => handleSubmit()}>
+                        <button onClick={() => handleAddTransaction()}>
                             <FaPlus color="grey"/>    
                         </button>
                     </td>
