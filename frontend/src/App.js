@@ -1,5 +1,5 @@
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
-import {Home, Forecast, Budgets, Login, SignUp, Transactions, AddBudget, UpdateBudget, AllTransactions} from './pages/index.js';
+import {Home, Forecast, Budgets, Login, SignUp, Transactions, AddBudget, AllTransactions} from './pages/index.js';
 import {Navbar} from './components';
 
 function App() {
@@ -13,7 +13,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/budgets" element={<Budgets />} />
           <Route path="/budgets/add-budget" element={<AddBudget />} />
-          <Route path="/budgets/update-budget" element={<UpdateBudget />}/>
           <Route path="/transactions/:budget_name/:item_name" element={<Transactions />} />
           <Route path="/transactions" element={<AllTransactions />} />
           <Route path="/forecast" element={<Forecast />} />

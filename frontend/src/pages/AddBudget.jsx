@@ -22,16 +22,20 @@ const AddBudget = () => {
         }
     }, [token, redirect])
 
-    const handleSubmit = async () => {
+    const handleAddBudget = async () => {
+        // prepare budget details
         const details = {budget_name: budgetName, items: items}
+        // send request to add budget to the database
         await axios.post("http://localhost:8080/main/budgets/add_budget", details, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         }).then(response => {
+            // show success message
             alert(response.data.Message)
+            // redirect to budgets
             redirect('/budgets')
-        }).catch(error => {
+        }).catch(error => { // show error message
             alert(error.response?.data || error.message);
         })
     }
@@ -133,7 +137,7 @@ const AddBudget = () => {
                 </div>
             ))}
             <button onClick={addItem}>Add another item</button>
-            <button onClick={handleSubmit}>Create Budget</button>
+            <button onClick={handleAddBudget}>Create Budget</button>
             <button onClick={(e) => {e.preventDefault();redirect('/budgets')}}>Back to my budget</button>
         </div>
     )

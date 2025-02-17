@@ -166,11 +166,13 @@ const Transactions = () => {
     const handleImportCSV = () => {
         const reader = new FileReader()
         
+        // read the csv file imported
         reader.readAsText(csvFile);
         reader.onload = async () => {
             const csv = reader.result
             const transactions = parseCSVToJSON(csv)
 
+            // gather import data
             const importData = {
                 item: {
                     budget_name: budget_name,
@@ -182,18 +184,21 @@ const Transactions = () => {
                     year: new Date().getFullYear()
                 }
             }
+            // send request to add the new imported transactions to the database
             await axios.post(`http://localhost:8080/main/transactions/add_transaction`, 
-                    importData,
-                    {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }).then(response => {
-                    alert(response.data.Message)
-                }).catch(error => {
-                    alert(error.response?.data)     
-                })
-            }
+                importData,
+                {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }).then(response => { // show success message
+                alert(response.data.Message)
+                // refresh screen
+                window.location.reload()
+            }).catch(error => { // show error message
+                alert(error.response?.data)     
+            })
+        }
     }
 
     return (
