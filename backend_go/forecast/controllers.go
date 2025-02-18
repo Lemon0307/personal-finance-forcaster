@@ -2,48 +2,65 @@ package forecast
 
 import (
 	"database/sql"
-	"golang/database"
 	"log"
 )
 
-func GetTransactions(db *sql.DB, user_id, item_name, budget_name string) []TotalTransactions {
-	// find month, year and total amount of transactions related to item
-	rows, err := database.DB.Query(`
-	SELECT t.month, t.year, SUM(t.amount) AS total_amount 
+func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
+	rows, err := db.Query(`
+	SELECT 
+		t.item_name, 
+		SUM(CASE WHEN t.type = 'outflow' THEN t.amount END), 
+		t.month, 
+		t.year, 
+		bi.budget_cost
 	FROM
 		Transactions t
 	JOIN 
-		Monthly_Costs mc
-	ON 
-		t.user_id = mc.user_id AND t.month = mc.month AND t.year = mc.year
+		Monthly_Costs mc 
+		ON t.user_id = mc.user_id 
+		AND t.month = mc.month 
+		AND t.year = mc.year
+	JOIN 
+		Budget_Items bi 
+		ON t.item_name = bi.item_name 
+		AND t.budget_name = bi.budget_name 
+		AND t.user_id = bi.user_id
 	WHERE 
-		mc.item_name = t.item_name
-		AND
-		mc.item_name = ?
-		AND
-		t.budget_name = ?
-		AND
-		t.user_id = ?
-	GROUP BY
-		t.month, t.year
-	ORDER BY
-		t.year, t.month;
-	`, item_name, budget_name, user_id)
+		t.user_id = ? 
+		AND t.budget_name = ?
+	GROUP BY 
+    	t.budget_name, t.item_name, bi.budget_cost, t.month, t.year;
+	`, user_id, budget_name)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var res []TotalTransactions
+	itemMap := make(map[string]*Item)
 
-	// append all transactions into res
 	for rows.Next() {
+		var item_name string
 		var transaction TotalTransactions
-		err := rows.Scan(&transaction.Month, &transaction.Year, &transaction.TotalAmount)
+		var budgetCost float64
+		err := rows.Scan(&item_name, &transaction.Amount, &transaction.Month, &transaction.Year, &budgetCost)
 		if err != nil {
 			log.Fatal(err)
 		}
-		res = append(res, transaction)
+
+		if _, exists := itemMap[item_name]; !exists {
+			itemMap[item_name] = &Item{
+				ItemName:          item_name,
+				BudgetCost:        budgetCost,
+				TotalTransactions: []TotalTransactions{},
+			}
+		}
+
+		itemMap[item_name].TotalTransactions = append(itemMap[item_name].TotalTransactions, transaction)
 	}
 
-	return res
+	var items []Item
+	for _, item := range itemMap {
+		items = append(items, *item)
+	}
+
+	return Items{BudgetName: budget_name, Items: items}
 }

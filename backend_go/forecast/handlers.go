@@ -1,13 +1,10 @@
 package forecast
 
 import (
-	"bytes"
 	"encoding/json"
 	"golang/auth"
 	"golang/budgets"
 	"golang/database"
-	"io"
-	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -24,46 +21,47 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 
 	var vars = mux.Vars(r)
 	// get item name, budget name and months to forecast from url
-	item_name := vars["item_name"]
 	budget_name := vars["budget_name"]
-	months := vars["months"]
+	// months := vars["months"]
 
 	// check if budget item exists
-	if !budgets.ItemExists(database.DB, user_id, item_name, budget_name) {
-		http.Error(w, "Budget item does not exist, please try again", http.StatusNotFound)
+	if !budgets.BudgetExists(database.DB, user_id, budget_name) {
+		http.Error(w, "Budget does not exist, please try again", http.StatusNotFound)
 	} else {
-		// get all transaction related to item name
-		res := GetTransactions(database.DB, user_id, item_name, budget_name)
-
-		resString, err := json.Marshal(res)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// request the python forecasting api
-		req, err := http.NewRequest("POST", "http://0.0.0.0:5000/forecast?months="+months,
-			bytes.NewBuffer(resString))
-		req.Header.Set("Content-Type", "application/json")
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		client := &http.Client{}
-		response, err := client.Do(req)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer response.Body.Close()
-
-		// read response from request
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// output results to the user
+		// get all items and transactions related to a budget
+		res := GetBudgetData(database.DB, user_id, budget_name)
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(response.StatusCode)
-		w.Write(body)
+		json.NewEncoder(w).Encode(res)
+
+		// resString, err := json.Marshal(res)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		// // request the python forecasting api
+		// req, err := http.NewRequest("POST", "http://0.0.0.0:5000/forecast?months="+months,
+		// 	bytes.NewBuffer(resString))
+		// req.Header.Set("Content-Type", "application/json")
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		// client := &http.Client{}
+		// response, err := client.Do(req)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// defer response.Body.Close()
+
+		// // read response from request
+		// body, err := io.ReadAll(response.Body)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+
+		// // output results to the user
+		// w.Header().Set("Content-Type", "application/json")
+		// w.WriteHeader(response.StatusCode)
+		// w.Write(body)
 	}
 }

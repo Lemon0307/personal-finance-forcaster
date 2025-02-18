@@ -142,7 +142,7 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 
 	// Query to get budgets with associated items
 	rows, err := database.DB.Query(`
-        SELECT budget.user_id, budget.budget_name, 
+        SELECT budget.budget_name, 
                items.item_name, items.budget_cost, 
                items.description, items.priority
         FROM Budget budget
@@ -156,7 +156,6 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 	var budgets = make(map[string]*Budget)
 
 	for rows.Next() {
-		var user_id string
 		var item Items
 		// handle budget items and their possible null values
 		var budget_name string

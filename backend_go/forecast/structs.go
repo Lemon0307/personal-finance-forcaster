@@ -3,7 +3,17 @@ package forecast
 type ForecastHandler struct{}
 
 type TotalTransactions struct {
-	Month       int
-	Year        int
-	TotalAmount float64
+	Amount string
+	Month  string
+	Year   string
+}
+type Item struct {
+	ItemName          string
+	BudgetCost        float64
+	TotalTransactions []TotalTransactions
+}
+
+type Items struct {
+	BudgetName string
+	Items      []Item
 }
