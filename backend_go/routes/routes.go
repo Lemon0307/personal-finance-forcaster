@@ -38,6 +38,6 @@ func TransactionRoutes(router *mux.Router, transactionService transactions.Trans
 }
 
 func ForecastRoutes(router *mux.Router, forecastService forecast.ForecastService) {
-	router.HandleFunc("/forecast/{months}/{budget_name}/",
+	router.HandleFunc("/forecast/{months}/{budget_name}",
 		forecastService.ForecastTransactions).Methods("GET")
 }

@@ -1,10 +1,13 @@
 package forecast
 
 import (
+	"bytes"
 	"encoding/json"
 	"golang/auth"
 	"golang/budgets"
 	"golang/database"
+	"io"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -22,7 +25,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 	var vars = mux.Vars(r)
 	// get item name, budget name and months to forecast from url
 	budget_name := vars["budget_name"]
-	// months := vars["months"]
+	months := vars["months"]
 
 	// check if budget item exists
 	if !budgets.BudgetExists(database.DB, user_id, budget_name) {
@@ -30,38 +33,40 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 	} else {
 		// get all items and transactions related to a budget
 		res := GetBudgetData(database.DB, user_id, budget_name)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(res)
+		if res.Items == nil {
+			http.Error(w, "This budget does not have any items and transactions", http.StatusBadRequest)
+		} else {
+			resString, err := json.Marshal(res)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		// resString, err := json.Marshal(res)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+			// request the python forecasting api
+			req, err := http.NewRequest("POST", "http://0.0.0.0:5000/forecast?months="+months,
+				bytes.NewBuffer(resString))
+			req.Header.Set("Content-Type", "application/json")
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		// // request the python forecasting api
-		// req, err := http.NewRequest("POST", "http://0.0.0.0:5000/forecast?months="+months,
-		// 	bytes.NewBuffer(resString))
-		// req.Header.Set("Content-Type", "application/json")
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+			client := &http.Client{}
+			response, err := client.Do(req)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer response.Body.Close()
 
-		// client := &http.Client{}
-		// response, err := client.Do(req)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
-		// defer response.Body.Close()
+			// read response from request
+			body, err := io.ReadAll(response.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		// // read response from request
-		// body, err := io.ReadAll(response.Body)
-		// if err != nil {
-		// 	log.Fatal(err)
-		// }
+			// output results to the user
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(response.StatusCode)
+			w.Write(body)
+		}
 
-		// // output results to the user
-		// w.Header().Set("Content-Type", "application/json")
-		// w.WriteHeader(response.StatusCode)
-		// w.Write(body)
 	}
 }

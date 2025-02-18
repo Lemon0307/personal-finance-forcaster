@@ -7,20 +7,30 @@ from scipy.special import inv_boxcox
 def forecast(transactions, months, p, d, q):
     # turns the transactions into a series
     transactions = pd.Series(transactions)
+    if transactions.nunique() == 1:
+        return np.full(months, transactions.iloc[0]).tolist(), "values are constant, therefore cannot be forecasted"
+    
     # applies the boxcox transform to stationarise transactions
-    stationary_data, lam = boxcox(transactions)
+    try:
+        stationary_data, lam = boxcox(transactions)
+    except ValueError: #catches transactions being constant values
+        return np.full(months, transactions.iloc[0]).tolist(), "box-cox transformation failed"
+    
     # difference the transactions for further stationarity
     differenced_data = pd.Series(stationary_data).diff().dropna()
+
     # build and apply the ARIMA model for forecasting
     model = ARIMA(differenced_data, order=(p, d, q)).fit()
     differenced_forecasts = model.forecast(steps=months)
+
     #reverse differencing
     last = stationary_data[-1]
     forecasted_stationary = np.r_[last, differenced_forecasts].cumsum()[1:]
+
     #apply inverse boxcox to revert the transactions back
     forecasted_values = inv_boxcox(forecasted_stationary, lam)
 
-    return forecasted_values
+    return forecasted_values.tolist(), None
 
 def mean_value(combined_transactions):
     #approximating the original and forecasted transactions as a polynomial

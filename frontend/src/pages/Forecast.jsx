@@ -18,7 +18,6 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const Forecast = () => {
 
     const [budget, setBudget] = useState("")
-    const [item, setItem] = useState("")
     // const [monthFrom, setMonthFrom] = useState(1)
     const [months, setMonths] = useState(1)
     const [forecast, setForecast] = useState([])
@@ -46,7 +45,6 @@ const Forecast = () => {
     ])
 
     const token = localStorage.getItem("token")
-    const selectedBudgetData = budgetData.find(bd => bd.budget_name === budget);
 
     useEffect(() => {
         const GetBudgets = async () => {
@@ -70,56 +68,49 @@ const Forecast = () => {
         setBudget(value)
     }
 
-    const handleSelectItem = (e) => {
-        const {value} = e.target
-        setItem(value)
-    }
-
     const ForecastTransactions = async () => {
-        try {
-            const response = await axios.get(`http://localhost:8080/main/forecast/${months}/${budget}/${item}`, {
+        await axios.get(`http://localhost:8080/main/forecast/${months}/${budget}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
+            }).then(response => {
+                setForecast(response.data.forecasted_spending)
+                console.log(response.data)
+                setPastTransactions(response.data.total_spending)
+                setRecommendedBudget(response.data.recommended_budget)                
+            }).catch(error => {
+                alert(error.response?.data);
             })
-            setForecast(response.data.forecast)
-            console.log(response.data)
-            setPastTransactions(response.data.total_transactions)
-            setRecommendedBudget(response.data.recommended_budget)
-        } catch (error) {
-            console.log(error.response.data.message)
-            alert(error.response?.data.message);
-        }
     }
 
-    const handleApplyBudget = async () => {
-        try {
-            await axios.put(`http://localhost:8080/main/budgets/update_item/${budget}/${item}`, {
-                budget_cost: recommendedBudget
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            alert("Successfully applied budget to item")
-        } catch (error) {
-            alert(error.response?.data || error.message);
-        }
-    }
+    // const handleApplyBudget = async () => {
+    //     try {
+    //         await axios.put(`http://localhost:8080/main/budgets/update_item/${budget}/${item}`, {
+    //             budget_cost: recommendedBudget
+    //         }, {
+    //             headers: {
+    //                 Authorization: `Bearer ${token}`
+    //             }
+    //         })
+    //         alert("Successfully applied budget to item")
+    //     } catch (error) {
+    //         alert(error.response?.data || error.message);
+    //     }
+    // }
 
     const forecastData = {
         labels: [...pastTransactions, ...forecast].map(entry => `${entry.Month}/${entry.Year}`),
         datasets: [
             {
                 label: "Past Transactions",
-                data: pastTransactions.map(entry => entry.TotalAmount),
+                data: pastTransactions.map(entry => entry.Amount),
                 borderColor: "blue",
                 backgroundColor: "rgba(0, 0, 255, 0.2)",
                 tension: 0.4,
             },
             {
                 label: "Forecasted Transactions",
-                data: [...new Array(pastTransactions?.length).fill(null), ...forecast.map(entry => entry.TotalAmount)],
+                data: [...new Array(pastTransactions?.length).fill(null), ...forecast.map(entry => entry.Amount)],
                 borderColor: "red",
                 backgroundColor: "rgba(255, 0, 0, 0.2)",
                 tension: 0.4,
@@ -181,18 +172,6 @@ const Forecast = () => {
                         </select>
 
                         {/* Budget Item Selection */}
-                        {selectedBudgetData && selectedBudgetData?.items?.length > 0 ? (
-                            <select onChange={(e) => handleSelectItem(e)} value={item}>
-                                <option value="" disabled>Select Item...</option>
-                                {selectedBudgetData.items.map((item, index) => (
-                                    <option key={index} value={item.item_name}>
-                                        {item.item_name}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            budget && <div>No budget items available</div>
-                        )}
                         <h1>Duration of forecast</h1>
                         <div className="flex">
                             <input 
@@ -204,7 +183,7 @@ const Forecast = () => {
                             />
                             <h1>months</h1>
                         </div>
-                        {item && <button onClick={() => ForecastTransactions()}>Forecast</button>}
+                        {budget && <button onClick={() => ForecastTransactions()}>Forecast</button>}
                         
                     </div>
                     <div className="flex-grow w-full">
@@ -222,7 +201,7 @@ const Forecast = () => {
                 {forecast.length > 0 && 
                 <div className="flex items-center">
                     <h1 className="px-5">Recommended Budget: £{recommendedBudget.toFixed(2)}</h1>
-                    <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button>
+                    {/* <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button> */}
                 </div>}
 
             </div>

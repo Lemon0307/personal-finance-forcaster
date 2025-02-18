@@ -165,7 +165,7 @@ func (budget *BudgetHandler) GetBudget(w http.ResponseWriter, r *http.Request) {
 		var priority sql.NullInt32
 
 		// Scan values from the query result
-		if err := rows.Scan(&user_id, &budget_name, &item_name,
+		if err := rows.Scan(&budget_name, &item_name,
 			&budget_cost, &description, &priority); err != nil {
 			log.Fatal(err)
 		}

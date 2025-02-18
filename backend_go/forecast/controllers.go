@@ -9,7 +9,8 @@ func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 	rows, err := db.Query(`
 	SELECT 
 		t.item_name, 
-		SUM(CASE WHEN t.type = 'outflow' THEN t.amount END), 
+		SUM(CASE WHEN t.type = 'outflow' THEN t.amount ELSE 0 END), 
+		SUM(CASE WHEN t.type = 'inflow' THEN t.amount ELSE 0 END),
 		t.month, 
 		t.year, 
 		bi.budget_cost
@@ -39,22 +40,31 @@ func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 
 	for rows.Next() {
 		var item_name string
-		var transaction TotalTransactions
-		var budgetCost float64
-		err := rows.Scan(&item_name, &transaction.Amount, &transaction.Month, &transaction.Year, &budgetCost)
+		var total_spent TotalTransactions
+		var total_earned TotalTransactions
+		var year int
+		var month int
+		var budget_cost float64
+		err := rows.Scan(&item_name, &total_spent.Amount, &total_earned.Amount, &month, &year, &budget_cost)
 		if err != nil {
 			log.Fatal(err)
 		}
+		total_spent.Month = month
+		total_spent.Year = year
+		total_earned.Month = month
+		total_earned.Year = year
 
 		if _, exists := itemMap[item_name]; !exists {
 			itemMap[item_name] = &Item{
-				ItemName:          item_name,
-				BudgetCost:        budgetCost,
-				TotalTransactions: []TotalTransactions{},
+				ItemName:    item_name,
+				BudgetCost:  budget_cost,
+				TotalSpent:  []TotalTransactions{},
+				TotalEarned: []TotalTransactions{},
 			}
 		}
 
-		itemMap[item_name].TotalTransactions = append(itemMap[item_name].TotalTransactions, transaction)
+		itemMap[item_name].TotalSpent = append(itemMap[item_name].TotalSpent, total_spent)
+		itemMap[item_name].TotalEarned = append(itemMap[item_name].TotalEarned, total_earned)
 	}
 
 	var items []Item
