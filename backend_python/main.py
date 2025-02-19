@@ -41,6 +41,7 @@ class Forecast(Resource):
                 res_spent.append({"Month": month, "Year": year, "Amount": forecasted_spending[i]})
                 res_earned.append({"Month": month, "Year": year, "Amount": forecasted_earning[i]})
             sub_response = {}
+            sub_response['item_name'] = item.get("ItemName")
             sub_response["total_spending"] = item.get("TotalSpent")
             sub_response["total_earning"] = item.get("TotalEarned")
             sub_response["forecasted_spending"] = res_spent

@@ -17,10 +17,11 @@ const Transactions = () => {
     const [transactions, setTransactions] = useState([
         {
             transaction_id: "",
-            name: "",
+            date: "",
             type: "",
+            name: "",
             amount: 0.00,
-            date: ""
+
         }
     ])
     // stores the csv file to be imported
@@ -148,9 +149,21 @@ const Transactions = () => {
             return;
         }
         // sets the headers of the csv as the keys of the transactions
-        const headers = Object.keys(transactions[0])
+        const headers = Object.keys(transactions[0]).slice(1)
         const rows = transactions.map(transaction => {
-            return headers.map(header => transaction[header]).join(",")
+            return headers.map(header => {
+                let value = transaction[header];
+    
+                // Check if the current field is a date and format it
+                if (header.toLowerCase().includes("date") && value) {
+                    const date = new Date(value);
+                    if (!isNaN(date.getTime())) {
+                        value = date.toLocaleDateString("en-GB"); // Converts to dd/mm/yyyy format
+                    }
+                }
+    
+                return value;
+            }).join(",");
         })
         // combines headers and rows to make the file
         const file = [headers.join(","), ...rows].join("\n")
@@ -170,6 +183,7 @@ const Transactions = () => {
         reader.readAsText(csvFile);
         reader.onload = async () => {
             const csv = reader.result
+            console.log(csv)
             const transactions = parseCSVToJSON(csv)
 
             // gather import data

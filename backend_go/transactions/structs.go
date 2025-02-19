@@ -9,10 +9,10 @@ type Item struct {
 
 type Transactions struct {
 	TransactionID   string  `json:"transaction_id"`
-	TransactionName string  `json:"name"`
-	TransactionType string  `json:"type"`
-	Amount          float32 `json:"amount"`
 	Date            Date    `json:"date"`
+	TransactionType string  `json:"type"`
+	TransactionName string  `json:"name"`
+	Amount          float32 `json:"amount"`
 }
 
 type TransactionHandler struct{}

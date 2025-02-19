@@ -20,29 +20,43 @@ const Forecast = () => {
     const [budget, setBudget] = useState("")
     // const [monthFrom, setMonthFrom] = useState(1)
     const [months, setMonths] = useState(1)
-    const [forecast, setForecast] = useState([])
-    const [pastTransactions, setPastTransactions] = useState([{
-        Month: 0,
-        Year: 0,
-        TotalAmount: 0.00
-    }])
-    const [recommendedBudget, setRecommendedBudget] = useState(1)
-
-    const [budgetData, setBudgetData] = useState([
+    const [items, setItems] = useState([
         {
-            budget: {
-                budget_name: ""
-            },
-            items: [
+            "forecasted_earning": [
                 {
-                    item_name: "",
-                    budget_cost: 0.00,
-                    description: "",
-                    priority: 0
+                    "Amount": 0,
+                    "Month": 2,
+                    "Year": 2025
+                }
+            ],
+            "forecasted_spending": [
+                {
+                    "Amount": 0,
+                    "Month": 2,
+                    "Year": 2025
+                }
+            ],
+            "item_name": "Meals",
+            "net_cash_flow": 0,
+            "recommended_budget": 0,
+            "total_earning": [
+                {
+                    "Amount": 0,
+                    "Month": 11,
+                    "Year": 2024
+                }
+            ],
+            "total_spending": [
+                {
+                    "Amount": 0,
+                    "Month": 9,
+                    "Year": 2024
                 }
             ]
         }
     ])
+
+    const [budgetData, setBudgetData] = useState()
 
     const token = localStorage.getItem("token")
 
@@ -55,7 +69,6 @@ const Forecast = () => {
                     }
                 })
                 setBudgetData(response.data)
-                // console.log(budget)
             } catch (error) {
                 alert(error.response?.data || error.message);
             }
@@ -74,10 +87,7 @@ const Forecast = () => {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => {
-                setForecast(response.data.forecasted_spending)
-                console.log(response.data)
-                setPastTransactions(response.data.total_spending)
-                setRecommendedBudget(response.data.recommended_budget)                
+                setItems(response?.data)
             }).catch(error => {
                 alert(error.response?.data);
             })
@@ -98,56 +108,70 @@ const Forecast = () => {
     //     }
     // }
 
-    const forecastData = {
-        labels: [...pastTransactions, ...forecast].map(entry => `${entry.Month}/${entry.Year}`),
-        datasets: [
-            {
-                label: "Past Transactions",
-                data: pastTransactions.map(entry => entry.Amount),
-                borderColor: "blue",
-                backgroundColor: "rgba(0, 0, 255, 0.2)",
-                tension: 0.4,
-            },
-            {
-                label: "Forecasted Transactions",
-                data: [...new Array(pastTransactions?.length).fill(null), ...forecast.map(entry => entry.Amount)],
-                borderColor: "red",
-                backgroundColor: "rgba(255, 0, 0, 0.2)",
-                tension: 0.4,
-            },
-            {
-                label: "Recommended Budget",
-                data: new Array(5).fill(recommendedBudget),
-                borderColor: "green",
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointRadius: 0
-            }
-        ]
+    const getRandomColor = () => {
+        return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
     };
 
+    console.log(items)
+
+    const labels = [
+        ...new Set(
+          items.flatMap(item =>
+            [...item.total_spending, ...item.forecasted_spending].map(s => `${s.Month}/${s.Year}`)
+          )
+        ),
+      ].sort((a, b) => {
+        // Sort dates in ascending order (e.g., "2/2025" before "3/2025")
+        const [monthA, yearA] = a.split("/").map(Number);
+        const [monthB, yearB] = b.split("/").map(Number);
+        return yearA === yearB ? monthA - monthB : yearA - yearB;
+      });
+
+    // Create datasets for each item
+    const datasets = items.flatMap(item => {
+        const color = getRandomColor();
+        return [
+          {
+            label: `${item.item_name} - Past Spending`,
+            data: labels.map(label => {
+              const entry = item.total_spending.find(s => `${s.Month}/${s.Year}` === label);
+              return entry ? entry.Amount : null;
+            }),
+            borderColor: color,
+            backgroundColor: "rgba(0,0,0,0)",
+            tension: 0.3,
+            borderDash: [], // Solid line for past data
+          },
+          {
+            label: `${item.item_name} - Forecasted Spending`,
+            data: labels.map(label => {
+              const entry = item.forecasted_spending.find(s => `${s.Month}/${s.Year}` === label);
+              return entry ? entry.Amount : null;
+            }),
+            borderColor: color,
+            backgroundColor: "rgba(0,0,0,0)",
+            tension: 0.3,
+            borderDash: [5, 5], // Dashed line for forecast
+          },
+        ];
+      });
+  
+    const forecastData = {
+      labels,
+      datasets,
+    };
+  
     const options = {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: "top",
-            },
+      responsive: true,
+      plugins: {
+        legend: {
+          position: "top",
         },
-        scales: {
-            y: {
-                title: {
-                    display: true,
-                    text: "Amount (£)"
-                }
-            },
-            x: {
-                title: {
-                    display: true,
-                    text: "Transaction date (month)"
-                }
-            }
+        title: {
+          display: true,
+          text: "Forecasted Spending by Item",
         },
+      },
     };
     
         
@@ -160,7 +184,7 @@ const Forecast = () => {
                         {/* Budget Selection */}
                         <select onChange={(e) => handleSelectBudget(e)} value={budget}>
                             <option value="" disabled>Select Budget...</option>
-                            {budgetData.length > 0 ? (
+                            {budgetData?.length > 0 ? (
                                 budgetData.map((bd, index) => (
                                     <option key={index} value={bd.budget_name}>
                                         {bd.budget_name}
@@ -188,7 +212,7 @@ const Forecast = () => {
                     </div>
                     <div className="flex-grow w-full">
                         <div style={{ height: "calc(100vh - 200px)" }}>
-                        {pastTransactions?.length > 0 && (
+                        {items?.length > 0 && (
                         <Line
                             data={forecastData}
                             options={options}
@@ -198,11 +222,11 @@ const Forecast = () => {
                         </div>
                     </div>
                 </div>
-                {forecast.length > 0 && 
+                {/* {items.length > 0 && 
                 <div className="flex items-center">
                     <h1 className="px-5">Recommended Budget: £{recommendedBudget.toFixed(2)}</h1>
-                    {/* <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button> */}
-                </div>}
+                    <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button>
+                </div>} */}
 
             </div>
         </div>

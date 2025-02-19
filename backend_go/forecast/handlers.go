@@ -3,6 +3,7 @@ package forecast
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"golang/auth"
 	"golang/budgets"
 	"golang/database"
@@ -40,6 +41,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 			if err != nil {
 				log.Fatal(err)
 			}
+			fmt.Println(res)
 
 			// request the python forecasting api
 			req, err := http.NewRequest("POST", "http://0.0.0.0:5000/forecast?months="+months,
