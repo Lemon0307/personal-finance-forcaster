@@ -81,17 +81,24 @@ const Forecast = () => {
         setBudget(value)
     }
 
-    const ForecastTransactions = async () => {
-        await axios.get(`http://localhost:8080/main/forecast/${months}/${budget}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }).then(response => {
-                setItems(response?.data)
-            }).catch(error => {
-                alert(error.response?.data);
-            })
-    }
+const ForecastTransactions = async () => {
+     await axios.get(`http://localhost:8080/main/forecast/${months}/${budget}`, {
+             headers: {
+                 Authorization: `Bearer ${token}`
+             }
+         }).then(response => {
+             if (Array.isArray(response.data)) {
+                 setItems(response.data)
+             } else {
+                 alert("data isn't an array")
+                 console.log(typeof(response.data))
+                 setItems([])
+             }
+         }).catch(error => {
+             alert(error.response?.data || error.message);
+             console.log(error)
+         })
+ }
 
     // const handleApplyBudget = async () => {
     //     try {
@@ -111,8 +118,6 @@ const Forecast = () => {
     const getRandomColor = () => {
         return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
     };
-
-    console.log(items)
 
     const labels = [
         ...new Set(

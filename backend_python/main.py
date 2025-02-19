@@ -23,13 +23,14 @@ class Forecast(Resource):
         for item in items:
             total_spent = list(map(lambda x: x.get('Amount'), item.get("TotalSpent")))
             total_earned = list(map(lambda x: x.get('Amount'), item.get("TotalEarned")))
-            print(total_earned)
             dates = list(map(lambda x: {'month': x.get('Month'), 
                                         'year': x.get('Year')}, item.get("TotalSpent")))
-            forecasted_spending, error = forecast(total_spent, int(months), 12, 1, 12)
+            print(total_spent)
+            forecasted_spending, error = forecast(total_spent, int(months), 1, 1, 1)
+            print(forecasted_spending)
             if error != None:
                 return jsonify({"error": error})
-            forecasted_earning, error = forecast(total_earned, int(months), 12, 1, 12)
+            forecasted_earning, error = forecast(total_earned, int(months), 1, 1, 1)
             recent_month = dates[-1].get('month')
             recent_year = dates[-1].get('year')
 
@@ -48,7 +49,7 @@ class Forecast(Resource):
             sub_response["forecasted_earning"] = res_earned
 
             sub_response["net_cash_flow"] = float(sum(forecasted_earning) - sum(forecasted_spending))
-            sub_response["recommended_budget"] = mean_value(total_spent + forecasted_spending)
+            sub_response["recommended_budget"] = float(mean_value(total_spent + forecasted_spending))
             response.append(sub_response)
         return jsonify(response)
 

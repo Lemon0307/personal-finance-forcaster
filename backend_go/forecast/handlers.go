@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"reflect"
 
 	"github.com/gorilla/mux"
 )
@@ -34,6 +35,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 	} else {
 		// get all items and transactions related to a budget
 		res := GetBudgetData(database.DB, user_id, budget_name)
+		fmt.Println(res)
 		if res.Items == nil {
 			http.Error(w, "This budget does not have any items and transactions", http.StatusBadRequest)
 		} else {
@@ -41,7 +43,6 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Println(res)
 
 			// request the python forecasting api
 			req, err := http.NewRequest("POST", "http://0.0.0.0:5000/forecast?months="+months,
@@ -64,6 +65,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 				log.Fatal(err)
 			}
 
+			fmt.Println(reflect.TypeOf(response.Body))
 			// output results to the user
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(response.StatusCode)
