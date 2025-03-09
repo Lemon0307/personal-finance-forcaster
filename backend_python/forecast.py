@@ -7,7 +7,7 @@ from scipy.special import inv_boxcox
 def forecast(transactions, months, p, d, q):
     # turns the transactions into a series
     transactions = pd.Series(transactions)
-    model = ARIMA(transactions, order=(12, 1, 12)).fit()
+    model = ARIMA(transactions, order=(1, 1, 1)).fit()
 
     forecast = model.forecast(steps=months)
     
