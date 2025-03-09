@@ -28,10 +28,3 @@ def mean_value(combined_transactions):
     mean_value = (integral(last) - integral(first)) / (last - first)
 
     return mean_value
-
-# def recommend_budget(budgets, total_budget):
-
-
-# 25 percentile
-def estimate_minimum_spending(transactions):
-    return np.percentile(transactions, 25) if transations else 0
