@@ -10,7 +10,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"reflect"
 
 	"github.com/gorilla/mux"
 )
@@ -49,7 +48,7 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 				bytes.NewBuffer(resString))
 			req.Header.Set("Content-Type", "application/json")
 			if err != nil {
-				log.Fatal(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 
 			client := &http.Client{}
@@ -65,7 +64,6 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 				log.Fatal(err)
 			}
 
-			fmt.Println(reflect.TypeOf(response.Body))
 			// output results to the user
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(response.StatusCode)

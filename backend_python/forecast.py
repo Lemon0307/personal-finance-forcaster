@@ -29,20 +29,9 @@ def mean_value(combined_transactions):
 
     return mean_value
 
-def knapsack(values, weights, capacity):
-    n = len(values)
-    dp = [0] * (capacity + 1)
+# def recommend_budget(budgets, total_budget):
 
-    for i in range(n):
-        for w in range(capacity, weights[i] - 1, -1):
-            dp[w] = max(dp[w], dp[w - weights[i]] + values[i])
 
-    # Backtrack to find which items are selected
-    w = capacity
-    selected_items = [False] * n
-    for i in range(n - 1, -1, -1):
-        if w >= weights[i] and dp[w] == dp[w - weights[i]] + values[i]:
-            selected_items[i] = True
-            w -= weights[i]
-
-    return selected_items
+# 25 percentile
+def estimate_minimum_spending(transactions):
+    return np.percentile(transactions, 25) if transations else 0

@@ -8,6 +8,7 @@ import (
 	"golang/forecast"
 	"golang/routes"
 	"golang/transactions"
+	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -43,5 +44,8 @@ func main() {
 	router_with_cors := c.Handler(router)
 
 	fmt.Println("Server started at http://localhost:8080")
-	http.ListenAndServe(":8080", router_with_cors)
+	err := http.ListenAndServe(":8080", router_with_cors)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
