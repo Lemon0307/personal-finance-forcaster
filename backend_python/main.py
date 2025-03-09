@@ -55,8 +55,8 @@ class Forecast(Resource):
             sub_response["forecasted_spending"] = res_spent
             sub_response["forecasted_earning"] = res_earned
 
-            sub_response["net_cash_flow"] = float(sum(forecasted_earning) - sum(forecasted_spending))
-            sub_response["recommended_budget"] = float(mean_value(total_spent + forecasted_spending))
+            sub_response["net_cash_flow"] = round(float(sum(forecasted_earning) - sum(forecasted_spending)), 2)
+            sub_response["recommended_budget"] = round(float(mean_value(total_spent + forecasted_spending)), 2)
             response.append(sub_response)
 
         return jsonify(response)

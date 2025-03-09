@@ -56,6 +56,8 @@ const Forecast = () => {
         }
     ])
 
+    const [recommendedBudget, setRecommendedBudget] = useState([])
+
     const [budgetData, setBudgetData] = useState()
 
     const token = localStorage.getItem("token")
@@ -89,6 +91,12 @@ const ForecastTransactions = async () => {
          }).then(response => {
              if (Array.isArray(response.data)) {
                  setItems(response.data)
+                 setRecommendedBudget(response.data.map(rb => (
+                     {
+                         item_name: rb.item_name,
+                         recommended_budget: rb.recommended_budget
+                     }
+                 )))
              } else {
                  alert("data isn't an array")
                  console.log(typeof(response.data))
@@ -100,20 +108,20 @@ const ForecastTransactions = async () => {
          })
  }
 
-    // const handleApplyBudget = async () => {
-    //     try {
-    //         await axios.put(`http://localhost:8080/main/budgets/update_item/${budget}/${item}`, {
-    //             budget_cost: recommendedBudget
-    //         }, {
-    //             headers: {
-    //                 Authorization: `Bearer ${token}`
-    //             }
-    //         })
-    //         alert("Successfully applied budget to item")
-    //     } catch (error) {
-    //         alert(error.response?.data || error.message);
-    //     }
-    // }
+    const handleApplyBudget = async (item, recommended_budget) => {
+        try {
+            await axios.put(`http://localhost:8080/main/budgets/update_item/${budget}/${item}`, {
+                budget_cost: recommended_budget
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            alert("Successfully applied budget to item")
+        } catch (error) {
+            alert(error.response?.data || error.message);
+        }
+    }
 
     const getRandomColor = () => {
         return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
@@ -226,12 +234,18 @@ const ForecastTransactions = async () => {
                         )}
                         </div>
                     </div>
+                    {recommendedBudget && 
+                    <div>
+                        <h1>Recommended Budgets</h1>
+                        {recommendedBudget.map((rb, index) => (
+                            <div key={index}>
+                                {rb.item_name} : {rb.recommended_budget}
+                                <button onClick={() => handleApplyBudget(rb.item_name, rb.recommended_budget)}>Apply Budget</button>
+                            </div>
+                        ))}
+                    </div>
+                    }
                 </div>
-                {/* {items.length > 0 && 
-                <div className="flex items-center">
-                    <h1 className="px-5">Recommended Budget: £{recommendedBudget.toFixed(2)}</h1>
-                    <button onClick={() => handleApplyBudget()} className="px-5">Apply Budget</button>
-                </div>} */}
 
             </div>
         </div>
