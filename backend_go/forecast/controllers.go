@@ -6,6 +6,7 @@ import (
 )
 
 func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
+	// select all transactions based of a user and a budget
 	rows, err := db.Query(`
 	SELECT 
 		t.item_name, 
@@ -36,6 +37,7 @@ func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 		log.Fatal(err)
 	}
 
+	// make a hash map to store transactions for items
 	itemMap := make(map[string]*Item)
 
 	for rows.Next() {
@@ -45,6 +47,8 @@ func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 		var year int
 		var month int
 		var budget_cost float64
+
+		// gather data returned from the query
 		err := rows.Scan(&item_name, &total_spent.Amount, &total_earned.Amount, &month, &year, &budget_cost)
 		if err != nil {
 			log.Fatal(err)
@@ -54,6 +58,7 @@ func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 		total_earned.Month = month
 		total_earned.Year = year
 
+		// make a new key value pair if item doesn't exist
 		if _, exists := itemMap[item_name]; !exists {
 			itemMap[item_name] = &Item{
 				ItemName:    item_name,
@@ -63,10 +68,12 @@ func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 			}
 		}
 
+		// add total spent and total earned for an item
 		itemMap[item_name].TotalSpent = append(itemMap[item_name].TotalSpent, total_spent)
 		itemMap[item_name].TotalEarned = append(itemMap[item_name].TotalEarned, total_earned)
 	}
 
+	// turn items hash map into an items array
 	var items []Item
 	for _, item := range itemMap {
 		items = append(items, *item)

@@ -354,10 +354,15 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 		_, err = database.DB.Exec(`
 		DELETE FROM Transactions
 		WHERE transaction_id = ? 
-		AND user_id = (SELECT user_id FROM Monthly_Costs WHERE item_name = ? 
-		AND month = ? AND year = ? AND budget_name = ?);
-`,
-			transaction_id, item_name, month, year, budget_name)
+		AND user_id = (
+			SELECT user_id FROM Monthly_Costs 
+			WHERE item_name = ? 
+			AND month = ? 
+			AND year = ? 
+			AND budget_name = ?
+			LIMIT 1
+		);
+`, transaction_id, item_name, month, year, budget_name)
 		if err != nil {
 			log.Fatal(err)
 		}
