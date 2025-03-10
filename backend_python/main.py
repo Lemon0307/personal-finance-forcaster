@@ -13,7 +13,6 @@ class Forecast(Resource):
     @cross_origin()
     def post(self):
         jsonData = request.get_json()
-        print(jsonData)
         # get the number of months to forecast from url
         months = request.args.get('months')
         response = []

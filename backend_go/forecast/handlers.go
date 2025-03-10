@@ -3,7 +3,6 @@ package forecast
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"golang/auth"
 	"golang/budgets"
 	"golang/database"
@@ -34,7 +33,6 @@ func (forecast *ForecastHandler) ForecastTransactions(w http.ResponseWriter, r *
 	} else {
 		// get all items and transactions related to a budget
 		res := GetBudgetData(database.DB, user_id, budget_name)
-		fmt.Println(res)
 		if res.Items == nil {
 			http.Error(w, "This budget does not have any items and transactions", http.StatusBadRequest)
 		} else {
