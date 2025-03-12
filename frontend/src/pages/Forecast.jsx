@@ -18,7 +18,6 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const Forecast = () => {
 
     const [budget, setBudget] = useState("")
-    // const [monthFrom, setMonthFrom] = useState(1)
     const [months, setMonths] = useState(1)
     const [items, setItems] = useState([
         {
@@ -55,25 +54,26 @@ const Forecast = () => {
             ]
         }
     ])
-
     const [recommendedBudget, setRecommendedBudget] = useState([])
-
     const [budgetData, setBudgetData] = useState()
 
     const token = localStorage.getItem("token")
 
     useEffect(() => {
+        // gets all budgets for the user to select to forecast
         const GetBudgets = async () => {
-            try {
-                const response = await axios.get(`http://localhost:8080/main/budgets`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                })
+            await axios.get(`http://localhost:8080/main/budgets`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
+            .then(response => {
+                // stores response data in a state
                 setBudgetData(response.data)
-            } catch (error) {
+            })
+            .catch(error => {
                 alert(error.response?.data || error.message);
-            }
+            })
         }
         GetBudgets()
     }, [token])
@@ -83,108 +83,107 @@ const Forecast = () => {
         setBudget(value)
     }
 
-const ForecastTransactions = async () => {
-     await axios.get(`http://localhost:8080/main/forecast/${months}/${budget}`, {
-             headers: {
-                 Authorization: `Bearer ${token}`
-             }
-         }).then(response => {
-             if (Array.isArray(response.data)) {
-                 setItems(response.data)
-                 setRecommendedBudget(response.data.map(rb => (
-                     {
-                         item_name: rb.item_name,
-                         recommended_budget: rb.recommended_budget
-                     }
-                 )))
-             } else {
-                 alert("data isn't an array")
-                 console.log(typeof(response.data))
-                 setItems([])
-             }
-         }).catch(error => {
-             alert(error.response?.data || error.message);
-             console.log(error)
-         })
- }
+    const ForecastTransactions = async () => {
+        // send request to the server to forecast transactions
+        await axios.get(`http://localhost:8080/main/forecast/${months}/${budget}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        }).then(response => {
+            if (Array.isArray(response.data)) { // check if returned data is an array
+                // stores forecasted data and recommended budgets to use later
+                setItems(response.data)
+                setRecommendedBudget(response.data.map(rb => ({
+                    item_name: rb.item_name,
+                    recommended_budget: rb.recommended_budget
+                })))
+            } else {
+                alert("data isn't an array")
+                console.log(typeof(response.data))
+                setItems([])
+            }
+        }).catch(error => {
+            alert(error.response?.data || error.message);
+        })
+    }
 
     const handleApplyBudget = async (item, recommended_budget) => {
-        try {
-            await axios.put(`http://localhost:8080/main/budgets/update_item/${budget}/${item}`, {
-                budget_cost: recommended_budget
-            }, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
-            alert("Successfully applied budget to item")
-        } catch (error) {
+        // apply the recommended budget for that specific item
+        await axios.put(`http://localhost:8080/main/budgets/update_item/${budget}/${item}`, {
+            budget_cost: recommended_budget
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        .then(response => {
+            alert(response.data.Message) // alert response message
+        })
+        .catch(error => {
             alert(error.response?.data || error.message);
-        }
+        })
     }
 
     const getRandomColor = () => {
         return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
     };
 
-    const labels = [
-        ...new Set(
-          items.flatMap(item =>
-            [...item.total_spending, ...item.forecasted_spending].map(s => `${s.Month}/${s.Year}`)
-          )
-        ),
-      ].sort((a, b) => {
-        // Sort dates in ascending order (e.g., "2/2025" before "3/2025")
+    // set x-axis values
+    const labels = [...new Set(
+            // extracts total spending and forecasted spending 
+            // and puts them into a single array
+            items.flatMap(item =>
+                [...item.total_spending, ...item.forecasted_spending].map(s => `${s.Month}/${s.Year}`)
+            )
+        )].sort((a, b) => {
+        // sort the dates in ascending order
         const [monthA, yearA] = a.split("/").map(Number);
         const [monthB, yearB] = b.split("/").map(Number);
         return yearA === yearB ? monthA - monthB : yearA - yearB;
-      });
+    });
 
-    // Create datasets for each item
+    // make datasets for each item
     const datasets = items.flatMap(item => {
         const color = getRandomColor();
         return [
-          {
+        { // gather data for past spending in an item
             label: `${item.item_name} - Past Spending`,
             data: labels.map(label => {
-              const entry = item.total_spending.find(s => `${s.Month}/${s.Year}` === label);
-              return entry ? entry.Amount : null;
+                // extracts amount from total_spending array to use as y values
+                const entry = item.total_spending.find(s => `${s.Month}/${s.Year}` === label);
+                return entry ? entry.Amount : null;
             }),
             borderColor: color,
             backgroundColor: "rgba(0,0,0,0)",
             tension: 0.3,
-            borderDash: [], // Solid line for past data
-          },
-          {
+            borderDash: [], // solid line
+        },
+        { // gather data for forecasted spending in an item
             label: `${item.item_name} - Forecasted Spending`,
             data: labels.map(label => {
-              const entry = item.forecasted_spending.find(s => `${s.Month}/${s.Year}` === label);
-              return entry ? entry.Amount : null;
+                // extracts amount from forecasted_spending array to use as y values            
+                const entry = item.forecasted_spending.find(s => `${s.Month}/${s.Year}` === label);
+                return entry ? entry.Amount : null;
             }),
             borderColor: color,
             backgroundColor: "rgba(0,0,0,0)",
             tension: 0.3,
-            borderDash: [5, 5], // Dashed line for forecast
-          },
-        ];
-      });
-  
+            borderDash: [5, 5], // dashed line
+        }];
+        });
+
     const forecastData = {
-      labels,
-      datasets,
+        labels,
+        datasets,
     };
-  
+
     const options = {
-      responsive: true,
-      plugins: {
+        responsive: true,
+        plugins: {
         legend: {
-          position: "top",
+            position: "top",
+        }
         },
-        title: {
-          display: true,
-          text: "Forecasted Spending by Item",
-        },
-      },
     };
     
         
