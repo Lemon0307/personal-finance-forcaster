@@ -13,8 +13,6 @@ func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request)
 
 	var err error
 
-	// login
-
 	var account Account
 	// parse json into account struct
 	err = json.NewDecoder(r.Body).Decode(&account)
@@ -93,7 +91,7 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 		account.UserID = GenerateUserID()
 		// add details into the user table
 		_, err := database.DB.Exec(`INSERT INTO user (user_id, 
-		username, email, password, salt, forename, surname, dob, address, 
+		username, email, password, salt, forename, surname, dob, 
 		current_balance) VALUES 
 			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			account.UserID,
@@ -104,7 +102,6 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 			account.User.Forename,
 			account.User.Surname,
 			account.User.DOB.Time,
-			account.User.Address,
 			account.User.CurrentBalance)
 		// check if query returns errors
 		if err != nil {
@@ -148,8 +145,6 @@ var upgrader = websocket.Upgrader{
 		return origin == "http://localhost:3000"
 	},
 }
-
-// change this later
 
 func (auth *AuthenticationHandler) GetCurrentBalance(w http.ResponseWriter, r *http.Request) {
 	var err error

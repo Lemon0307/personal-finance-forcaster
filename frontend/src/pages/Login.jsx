@@ -6,7 +6,6 @@ const Login = () => {
 
   // User information state
   const [details, setDetails] = useState({
-    username: "",
     email: "",
     password: "",
   });
@@ -69,15 +68,6 @@ const Login = () => {
     <div className="p-40">
         <div className="grid place-items-center">
           <h2>Login</h2>
-          <input
-            type="username"
-            name="username"
-            placeholder="Username"
-            value={details.username}
-            onChange={handleDetailsChange}
-            className="py-2 my-2"
-            required
-          />
           <input
             type="email"
             name="email"

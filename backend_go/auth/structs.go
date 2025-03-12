@@ -15,7 +15,6 @@ type User struct {
 	Forename        string  `json:"forename"`
 	Surname         string  `json:"surname"`
 	DOB             Date    `json:"dob"`
-	Address         string  `json:"address"`
 	CurrentBalance  float32 `json:"current_balance"`
 }
 

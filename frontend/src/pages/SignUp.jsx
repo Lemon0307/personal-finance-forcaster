@@ -138,14 +138,6 @@ const SignUp = () => {
             className="py-2 my-2"
             required
           />
-          <textarea
-            name="address"
-            placeholder="Address"
-            value={details.address}
-            onChange={handleDetailsChange}
-            className="py-2 my-2"
-            required
-          />
           <input
             type="number"
             name="current_balance"
