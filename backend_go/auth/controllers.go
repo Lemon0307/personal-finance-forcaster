@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
+func (account *Account) ValidateUserAndPassword(db *sql.DB) bool {
 	var db_hash string
 	var db_salt []byte
 	// check if user exists in db
@@ -25,18 +25,11 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) (bool, error) {
 		account.User.Email).
 		Scan(&db_hash, &account.UserID, &db_salt)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return false, fmt.Errorf(`the email or password provided isn't 
-			correct, please try again or create a new account`)
-		}
-		return false, err
+		log.Fatal(err)
 	}
 	// check if password matches with  password in db
 	account.User.HashPassword(db_salt)
-	if account.User.Password == db_hash {
-		return true, nil
-	}
-	return false, nil
+	return account.User.Password == db_hash
 }
 
 func (account *Account) SecurityQuestionsValid(db *sql.DB) bool {

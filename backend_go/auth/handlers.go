@@ -21,18 +21,20 @@ func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	// check if user details are present in the db
-	user_password_ok, err := account.ValidateUserAndPassword(database.DB)
-	if err != nil {
+	if !account.ValidateUserAndPassword(database.DB) {
 		// return error message
-		http.Error(w, err.Error(), http.StatusNotFound)
-	}
-	if !user_password_ok {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, `The password you entered is incorrect, please try again`,
+			http.StatusUnauthorized)
+	} else if !account.SecurityQuestionsValid(database.DB) {
 		// return error message
 		w.Header().Set("Content-Type", "application/json")
 		http.Error(w, `Not enough security questions or security questions are invalid, please try again`,
 			http.StatusUnauthorized)
-	} else if account.SecurityQuestionsValid(database.DB) { // checks if security questions match
+	} else {
+		// checks if security questions match
 		token, err := account.GenerateJWT()
 		if err != nil {
 			http.Error(w, "Failed to generate JWT", http.StatusInternalServerError)
