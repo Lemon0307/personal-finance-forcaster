@@ -8,6 +8,8 @@ import (
 )
 
 // runs this code every request
+
+// change this bit
 func JWTAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// find token from authorization header
