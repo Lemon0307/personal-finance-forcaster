@@ -352,17 +352,20 @@ func (transaction *TransactionHandler) RemoveTransaction(w http.ResponseWriter, 
 		// delete transaction
 		// checks if transaction belongs to the user
 		_, err = database.DB.Exec(`
-		DELETE FROM Transactions
-		WHERE transaction_id = ? 
-		AND user_id = (
-			SELECT user_id FROM Monthly_Costs 
-			WHERE item_name = ? 
-			AND month = ? 
-			AND year = ? 
-			AND budget_name = ?
-			LIMIT 1
-		);
-`, transaction_id, item_name, month, year, budget_name)
+		DELETE t FROM Transactions t
+		JOIN Monthly_Costs mc
+		ON t.user_id = mc.user_id
+		AND t.budget_name = mc.budget_name
+		AND t.item_name = mc.item_name
+		AND t.month = mc.month
+		AND t.year = t.year
+		WHERE t.transaction_id = ?
+		AND mc.user_id = ?
+		AND t.budget_name = ?
+		AND t.item_name = ?
+		AND t.month = ?
+		AND t.year = ?;
+`, transaction_id, user_id, budget_name, item_name, month, year)
 		if err != nil {
 			log.Fatal(err)
 		}
