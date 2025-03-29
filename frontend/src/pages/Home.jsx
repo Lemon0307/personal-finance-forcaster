@@ -25,6 +25,7 @@ const Home = () => {
     let redirect = useNavigate()
     const token = localStorage.getItem('token')
     const username = localStorage.getItem('username')
+    const [transactions, setTransactions] = useState()
     const [data, setData] = useState(null)
 
     // transactions charts options
@@ -75,56 +76,21 @@ const Home = () => {
                 }
             })
             .then(response => {
-                if (response.data && (Array.isArray(response.data) || response.data.length > 0)) { // check if there are transactions in the response
-                    // reduce the response into a single object
-                    const budgetData = response.data.reduce((acc, budget) => {
-                        const budget_name = budget.item.budget_name;
-                        const item_name = budget.item.item_name;
-                        // sums all transactions in the transaction array, if there isn't any in the array then return zero
-                        const total_amount = budget.transactions?.reduce((sum, transaction) => sum + transaction.amount, 0) ?? 0;
-
-                        acc[budget_name] ??= {}
-                        // store total transaction amount in each item
-                        acc[budget_name][item_name] = total_amount;
-        
-                        return acc;
-                    }, {});
-
-                    // get all budgets
-                    const all_budgets = Object.keys(budgetData);
-                    // get all unique items
-                    const all_items = new Set();
-                    all_budgets.forEach(budget => {
-                        Object.keys(budgetData[budget]).forEach(item => {
-                            all_items.add(item);
-                        });
-                    });
-                    // convert to array
-                    const item_names = Array.from(all_items);
-
-                    // perpare chart data
-                    const labels = all_budgets;  // labels x-axis
-                    const datasets = item_names.map(item_name => { // labels y-axis
-                        return {
-                            label: item_name,
-                            data: all_budgets.map(budget => budgetData[budget][item_name]),
-                            backgroundColor: getRandomColour()
-                        };
-                    });
-
-                    // group x and y axis to form the chart
-                    const chartData = {
-                        labels: labels,
-                        datasets: datasets,
-                    };
-                    setData(chartData)
-                }
+                setTransactions(response.data)
             }).catch(error => { // return error message
                 alert(error.response?.data || error.message);
             })
         }
+
         getTransactions();
     }, [redirect, token]);
+
+    const groupTransactionsIntoLineChart = (data) => {
+
+    }
+
+    const groupTransactionsIntoStackedBarChart = (data) => {
+    }
 
     const getRandomColour = () => {
         const letters = '0123456789ABCDEF';
