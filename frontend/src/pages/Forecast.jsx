@@ -97,9 +97,9 @@ const Forecast = () => {
                     item_name: rb.item_name,
                     recommended_budget: rb.recommended_budget
                 })))
+                console.log(response.data)
             } else {
                 alert("data isn't an array")
-                console.log(typeof(response.data))
                 setItems([])
             }
         }).catch(error => {
@@ -133,15 +133,16 @@ const Forecast = () => {
             // extracts total spending and forecasted spending 
             // and puts them into a single array
             items.flatMap(item =>
-                [...item.total_spending, ...item.forecasted_spending].map(s => `${s.Month}/${s.Year}`)
+                [...item.total_spending, ...item.forecasted_spending].map(s => `${s.Date}`)
             )
         )].sort((a, b) => {
         // sort the dates in ascending order
-        const [monthA, yearA] = a.split("/").map(Number);
-        const [monthB, yearB] = b.split("/").map(Number);
-        return yearA === yearB ? monthA - monthB : yearA - yearB;
+        const dateA = new Date(a + '-01');
+        const dateB = new Date(b + '-01');
+        return dateA - dateB;
     });
-
+    
+    console.log(labels)
     // make datasets for each item
     const datasets = items.flatMap(item => {
         const color = getRandomColor();
@@ -150,7 +151,7 @@ const Forecast = () => {
             label: `${item.item_name} - Past Spending`,
             data: labels.map(label => {
                 // extracts amount from total_spending array to use as y values
-                const entry = item.total_spending.find(s => `${s.Month}/${s.Year}` === label);
+                const entry = item.total_spending.find(s => `${s.Date}` === label);
                 return entry ? entry.Amount : null;
             }),
             borderColor: color,
@@ -162,7 +163,7 @@ const Forecast = () => {
             label: `${item.item_name} - Forecasted Spending`,
             data: labels.map(label => {
                 // extracts amount from forecasted_spending array to use as y values            
-                const entry = item.forecasted_spending.find(s => `${s.Month}/${s.Year}` === label);
+                const entry = item.forecasted_spending.find(s => `${s.Date}` === label);
                 return entry ? entry.Amount : null;
             }),
             borderColor: color,
@@ -180,10 +181,13 @@ const Forecast = () => {
     const options = {
         responsive: true,
         plugins: {
-        legend: {
-            position: "top",
-        }
+            legend: {
+                position: "top",
+            }
         },
+        datasets: {
+            spanGaps: true,
+        }
     };
     
         
@@ -191,7 +195,7 @@ const Forecast = () => {
         <div className="p-20 flex">
             <div className="grid place-content-center">
                 <h1>Forecast</h1>
-                <div className="grid">
+                <div className="flex">
                     <div>
                         {/* Budget Selection */}
                         <select onChange={(e) => handleSelectBudget(e)} value={budget}>
@@ -228,7 +232,7 @@ const Forecast = () => {
                         <Line
                             data={forecastData}
                             options={options}
-                            className="w-full h-full"
+                            className="w-full"
                         />
                         )}
                         </div>
@@ -239,7 +243,10 @@ const Forecast = () => {
                         {recommendedBudget.map((rb, index) => (
                             <div key={index}>
                                 {rb.item_name} : {rb.recommended_budget}
-                                <button onClick={() => handleApplyBudget(rb.item_name, rb.recommended_budget)}>Apply Budget</button>
+                                <button 
+                                onClick={() => handleApplyBudget(rb.item_name, rb.recommended_budget)}
+                                className="bg-gray-100 p-2 rounded-xl"
+                                    >Apply Budget</button>
                             </div>
                         ))}
                     </div>

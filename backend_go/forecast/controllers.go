@@ -8,31 +8,35 @@ import (
 func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 	// select all transactions based of a user and a budget
 	rows, err := db.Query(`
-	SELECT 
-		t.item_name, 
-		SUM(CASE WHEN t.type = 'outflow' THEN t.amount ELSE 0 END), 
-		SUM(CASE WHEN t.type = 'inflow' THEN t.amount ELSE 0 END),
-		t.month, 
-		t.year, 
+	SELECT
+		DATE_FORMAT(t.date, '%Y-%m') AS month_year,
+		SUM(CASE WHEN t.type = 'outflow' THEN t.amount ELSE 0 END) AS total_outflow,
+		SUM(CASE WHEN t.type = 'inflow' THEN t.amount ELSE 0 END) AS total_inflow,
+		t.item_name,
 		bi.budget_cost
 	FROM
 		Transactions t
-	JOIN 
-		Monthly_Costs mc 
-		ON t.user_id = mc.user_id 
-		AND t.month = mc.month 
-		AND t.year = mc.year
-	JOIN 
-		Budget_Items bi 
+	JOIN Budget_Items bi 
 		ON t.item_name = bi.item_name 
 		AND t.budget_name = bi.budget_name 
 		AND t.user_id = bi.user_id
-	WHERE 
-		t.user_id = ? 
-		AND t.budget_name = ?
-	GROUP BY 
-    	t.budget_name, t.item_name, bi.budget_cost, t.month, t.year;
-	`, user_id, budget_name)
+	JOIN Monthly_Costs mc 
+		ON t.item_name = mc.item_name 
+		AND t.budget_name = mc.budget_name 
+		AND t.user_id = mc.user_id 
+		AND t.month = mc.month 
+		AND t.year = mc.year
+	WHERE
+		bi.budget_name = ?
+		AND t.user_id = ?
+	GROUP BY
+		DATE_FORMAT(t.date, '%Y-%m'),
+		bi.description,
+		t.item_name,
+		bi.budget_cost
+	ORDER BY
+		month_year;
+	`, budget_name, user_id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,19 +48,15 @@ func GetBudgetData(db *sql.DB, user_id, budget_name string) Items {
 		var item_name string
 		var total_spent TotalTransactions
 		var total_earned TotalTransactions
-		var year int
-		var month int
+		var transaction_date []uint8
 		var budget_cost float64
 
 		// gather data returned from the query
-		err := rows.Scan(&item_name, &total_spent.Amount, &total_earned.Amount, &month, &year, &budget_cost)
+		err := rows.Scan(&transaction_date, &total_spent.Amount, &total_earned.Amount, &item_name, &budget_cost)
 		if err != nil {
 			log.Fatal(err)
 		}
-		total_spent.Month = month
-		total_spent.Year = year
-		total_earned.Month = month
-		total_earned.Year = year
+		total_spent.Date = string(transaction_date)
 
 		// make a new key value pair if item doesn't exist
 		if _, exists := itemMap[item_name]; !exists {

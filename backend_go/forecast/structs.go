@@ -1,11 +1,12 @@
 package forecast
 
+import "time"
+
 type ForecastHandler struct{}
 
 type TotalTransactions struct {
 	Amount float64
-	Month  int
-	Year   int
+	Date   string
 }
 type Item struct {
 	ItemName    string
@@ -17,4 +18,8 @@ type Item struct {
 type Items struct {
 	BudgetName string
 	Items      []Item
+}
+
+type Date struct {
+	time.Time
 }
