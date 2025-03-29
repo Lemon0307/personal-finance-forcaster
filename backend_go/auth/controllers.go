@@ -21,11 +21,14 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) bool {
 	var db_hash string
 	var db_salt []byte
 	// check if user exists in db
+	if !UserExists(account.User, db) {
+		return false
+	}
 	err := db.QueryRow("SELECT password, user_id, salt FROM User WHERE email = ?",
 		account.User.Email).
 		Scan(&db_hash, &account.UserID, &db_salt)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err.Error())
 	}
 	// check if password matches with  password in db
 	account.User.HashPassword(db_salt)

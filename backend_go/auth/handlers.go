@@ -24,7 +24,7 @@ func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request)
 	if !account.ValidateUserAndPassword(database.DB) {
 		// return error message
 		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, `The password you entered is incorrect, please try again`,
+		http.Error(w, `The email or password you entered is incorrect, please try again`,
 			http.StatusUnauthorized)
 	} else if !account.SecurityQuestionsValid(database.DB) {
 		// return error message
@@ -41,11 +41,12 @@ func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Content-Type", "application/json")
 		// build response struct
 		response := struct {
-			Message, Token string
-			StatusCode     int
+			Message, Token, Username string
+			StatusCode               int
 		}{
 			"Successfully logged in!",
 			token,
+			account.User.Username,
 			201,
 		}
 		// builds json response

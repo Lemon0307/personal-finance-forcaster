@@ -53,9 +53,10 @@ const Login = () => {
       };
       console.log(userData)
     const response = await axios.post("http://localhost:8080/auth/login", userData)
+    
     alert(response.data.Message)
     localStorage.setItem("token", response.data.Token)
-    localStorage.setItem("username", userData.user.username)
+    localStorage.setItem("username", response.data.Username)
     localStorage.setItem("email", userData.user.email)
     e.preventDefault()
     redirect('/')
