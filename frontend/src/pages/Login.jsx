@@ -51,9 +51,8 @@ const Login = () => {
         user: {...details},
         security_questions: securityQuestions,
       };
-      console.log(userData)
     const response = await axios.post("http://localhost:8080/auth/login", userData)
-    
+    console.log(response.data.Username)
     alert(response.data.Message)
     localStorage.setItem("token", response.data.Token)
     localStorage.setItem("username", response.data.Username)

@@ -24,9 +24,9 @@ func (account *Account) ValidateUserAndPassword(db *sql.DB) bool {
 	if !UserExists(account.User, db) {
 		return false
 	}
-	err := db.QueryRow("SELECT password, user_id, salt FROM User WHERE email = ?",
+	err := db.QueryRow("SELECT username, password, user_id, salt FROM User WHERE email = ?",
 		account.User.Email).
-		Scan(&db_hash, &account.UserID, &db_salt)
+		Scan(&account.User.Username, &db_hash, &account.UserID, &db_salt)
 	if err != nil {
 		fmt.Println(err.Error())
 	}

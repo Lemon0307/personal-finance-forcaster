@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"golang/database"
 	"log"
 	"net/http"
@@ -40,6 +41,7 @@ func (auth *AuthenticationHandler) Login(w http.ResponseWriter, r *http.Request)
 		// return message
 		w.Header().Set("Content-Type", "application/json")
 		// build response struct
+		fmt.Println(account.User.Username)
 		response := struct {
 			Message, Token, Username string
 			StatusCode               int

@@ -124,7 +124,7 @@ const Forecast = () => {
         })
     }
 
-    const getRandomColor = () => {
+    const getRandomColour = () => {
         return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
     };
 
@@ -145,7 +145,7 @@ const Forecast = () => {
     console.log(labels)
     // make datasets for each item
     const datasets = items.flatMap(item => {
-        const color = getRandomColor();
+        const colour = getRandomColour();
         return [
         { // gather data for past spending in an item
             label: `${item.item_name} - Past Spending`,
@@ -154,7 +154,7 @@ const Forecast = () => {
                 const entry = item.total_spending.find(s => `${s.Date}` === label);
                 return entry ? entry.Amount : null;
             }),
-            borderColor: color,
+            borderColor: colour,
             backgroundColor: "rgba(0,0,0,0)",
             tension: 0.3,
             borderDash: [], // solid line
@@ -166,7 +166,7 @@ const Forecast = () => {
                 const entry = item.forecasted_spending.find(s => `${s.Date}` === label);
                 return entry ? entry.Amount : null;
             }),
-            borderColor: color,
+            borderColor: colour,
             backgroundColor: "rgba(0,0,0,0)",
             tension: 0.3,
             borderDash: [5, 5], // dashed line
