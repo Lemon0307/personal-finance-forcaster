@@ -70,6 +70,7 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 	err = json.NewDecoder(r.Body).Decode(&account)
 	if err != nil {
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
+		fmt.Println(err.Error())
 		return
 	}
 	if UserExists(account.User, database.DB) { // check if data provided exists in the user table
@@ -93,10 +94,10 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 		account.User.HashPassword(salt)
 		account.UserID = GenerateUserID()
 		// add details into the user table
-		_, err := database.DB.Exec(`INSERT INTO user (user_id, 
+		_, err := database.DB.Exec(`INSERT INTO user (user_id,
 		username, email, password, salt, dob, 
 		current_balance) VALUES 
-			(?, ?, ?, ?, ?, ?, ?, ?)`,
+			(?, ?, ?, ?, ?, ?, ?)`,
 			account.UserID,
 			account.User.Username,
 			account.User.Email,
@@ -120,7 +121,7 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 			if err != nil {
 				http.Error(w, "Could not insert security questions into database",
 					http.StatusInternalServerError)
-				log.Fatal(err)
+				fmt.Println(err.Error())
 			}
 		}
 		// return message
