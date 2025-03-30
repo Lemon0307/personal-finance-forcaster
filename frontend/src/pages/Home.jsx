@@ -29,15 +29,33 @@ ChartJS.register(
     const [transactions, setTransactions] = useState([]);
     const [chartToggle, setChartToggle] = useState("bar");
     const [chartData, setChartData] = useState({ labels: [], datasets: [] });
-
-    const options = {
+    const [options, setOptions] = useState()
+    const optionLine = {
         responsive: true,
         plugins: {
             legend: { position: 'top' },
             tooltip: {
                 callbacks: {
-                    label: function(tooltipItem) {
-                        return `Transactions: ${tooltipItem.raw}`;
+                    label: (tooltipItem) => {
+                        return `${tooltipItem.dataset.label}: ${tooltipItem.raw}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: { stacked: true, title: { display: true, text: 'Transaction date' } },
+            y: { stacked: true, title: { display: true, text: 'Transaction amount' } }
+        }
+    };
+
+    const optionBar = {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' },
+            tooltip: {
+                callbacks: {
+                    label: (tooltipItem) => {
+                        return `${tooltipItem.dataset.label}: ${tooltipItem.raw}`;
                     }
                 }
             }
@@ -110,6 +128,7 @@ ChartJS.register(
             ]
         })
 
+        setOptions(optionLine)
         setChartData({labels, datasets})
     }
 
@@ -156,7 +175,7 @@ ChartJS.register(
             }))
         ];
 
-        console.log(budget_data_map)
+        setOptions(optionBar)
         setChartData({ labels, datasets });  // Update chartData state
     };
 
