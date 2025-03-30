@@ -12,8 +12,6 @@ type User struct {
 	Password        string `json:"password"`
 	Salt            []byte
 	ConfirmPassword string  `json:"confirm_password"`
-	Forename        string  `json:"forename"`
-	Surname         string  `json:"surname"`
 	DOB             Date    `json:"dob"`
 	CurrentBalance  float32 `json:"current_balance"`
 }

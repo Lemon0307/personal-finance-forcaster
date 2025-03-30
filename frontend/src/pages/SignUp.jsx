@@ -10,8 +10,6 @@ const SignUp = () => {
     email: "",
     password: "",
     confirm_password: "",
-    forename: "",
-    surname: "",
     dob: "",
     address: "",
     current_balance: "",
@@ -106,24 +104,6 @@ const SignUp = () => {
             name="confirm_password"
             placeholder="Confirm Password"
             value={details.confirm_password}
-            onChange={handleDetailsChange}
-            className="py-2 my-2"
-            required
-          />
-          <input
-            type="text"
-            name="forename"
-            placeholder="Forename"
-            value={details.forename}
-            onChange={handleDetailsChange}
-            className="py-2 my-2"
-            required
-          />
-          <input
-            type="text"
-            name="surname"
-            placeholder="Surname"
-            value={details.surname}
             onChange={handleDetailsChange}
             className="py-2 my-2"
             required

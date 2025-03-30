@@ -94,16 +94,14 @@ func (auth *AuthenticationHandler) SignUp(w http.ResponseWriter, r *http.Request
 		account.UserID = GenerateUserID()
 		// add details into the user table
 		_, err := database.DB.Exec(`INSERT INTO user (user_id, 
-		username, email, password, salt, forename, surname, dob, 
+		username, email, password, salt, dob, 
 		current_balance) VALUES 
-			(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			(?, ?, ?, ?, ?, ?, ?, ?)`,
 			account.UserID,
 			account.User.Username,
 			account.User.Email,
 			account.User.Password,
 			account.User.Salt,
-			account.User.Forename,
-			account.User.Surname,
 			account.User.DOB.Time,
 			account.User.CurrentBalance)
 		// check if query returns errors
