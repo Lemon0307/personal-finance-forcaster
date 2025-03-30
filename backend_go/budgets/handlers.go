@@ -41,7 +41,7 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
 			user_id, budgets.BudgetName)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err.Error())
 		}
 		// add all budget items
 		for i := 0; i < len(budgets.Items); i++ {
@@ -56,7 +56,8 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 					budgets.Items[i].BudgetCost,
 					budgets.Items[i].Priority)
 				if err != nil {
-					log.Fatal(err)
+					fmt.Println(err.Error())
+					http.Error(w, "The budget or item name you entered is too long", http.StatusBadRequest)
 				}
 			} else {
 				http.Error(w, `Budget item with name `+budgets.Items[i].ItemName+

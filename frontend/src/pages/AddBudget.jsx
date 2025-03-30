@@ -23,21 +23,27 @@ const AddBudget = () => {
     }, [token, redirect])
 
     const handleAddBudget = async () => {
-        // prepare budget details
-        const details = {budget_name: budgetName, items: items}
-        // send request to add budget to the database
-        await axios.post("http://localhost:8080/main/budgets/add_budget", details, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }).then(response => {
-            // show success message
-            alert(response.data.Message)
-            // redirect to budgets
-            redirect('/budgets')
-        }).catch(error => { // show error message
-            alert(error.response?.data || error.message);
-        })
+        if (budgetName.length === 0) {
+            alert("Please provide a budget name")
+        } else if (items.find(item => item.item_name.length === 0 || item.budget_cost === 0)) {
+            alert("Please provide item details")
+        } else {
+            // prepare budget details
+            const details = {budget_name: budgetName, items: items}
+            // send request to add budget to the database
+            await axios.post("http://localhost:8080/main/budgets/add_budget", details, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }).then(response => {
+                // show success message
+                alert(response.data.Message)
+                // redirect to budgets
+                redirect('/budgets')
+            }).catch(error => { // show error message
+                alert(error.response?.data || error.message);
+            })            
+        }
     }
 
     const handleBudgetChange = (e) => {

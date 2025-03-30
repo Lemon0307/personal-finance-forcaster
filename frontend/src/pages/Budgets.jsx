@@ -8,9 +8,7 @@ const Budgets = () => {
     const redirect = useNavigate()
     const [budgets, setBudgets] = useState([])
     const [updateBudget, setUpdateBudget] = useState("")
-    const [updateItem, setUpdateItem] = useState({
-
-    })
+    const [updateItem, setUpdateItem] = useState({})
     const [isEditingBudget, setIsEditingBudget] = useState(false)
     const [editingItem, setEditingItem] = useState({ budgetIndex: null, itemIndex: null });
     const token = localStorage.getItem('token')
@@ -78,40 +76,45 @@ const Budgets = () => {
     const handleAddBudgetItem = async (budget_index, budget_name) => {
         // get new item to add from budgets array
         const { new_item } = budgets[budget_index];
-        new_item.budget_name = budget_name
-        let ok = true;
-        for (const key in new_item) {
-            if (typeof new_item[key] === "string" && new_item[key].trim().length === 0) {
-                ok = false;
+        if (new_item.budget_cost < 0) {
+            alert("item must have a positive budget amount")
+        } else {
+            new_item.budget_name = budget_name
+            let ok = true;
+            for (const key in new_item) {
+                if (typeof new_item[key] === "string" && new_item[key].trim().length === 0) {
+                    ok = false;
+                }
             }
+
+            // return error message if not all details are filled
+            if (!ok) {
+                alert("Please fill in all the required details.");
+                return;
+            }
+            const request_data = {
+                ...new_item,
+                // convert budget cost and priority into numbers
+                budget_cost: parseFloat(new_item.budget_cost),
+                priority: parseFloat(new_item.priority)
+            }
+
+            // send a request to create item in the database
+            await axios.post(`http://localhost:8080/main/budgets/add_item/${new_item.budget_name}`,
+            request_data, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }).then(
+                response => { // show the user the response message
+                    alert(response.data.Message)
+                    window.location.reload();
+                }
+            ).catch(error => { // return error message
+                alert(error.response?.data || error.message)
+            })            
         }
 
-        // return error message if not all details are filled
-        if (!ok) {
-            alert("Please fill in all the required details.");
-            return;
-        }
-        const request_data = {
-            ...new_item,
-            // convert budget cost and priority into numbers
-            budget_cost: parseFloat(new_item.budget_cost),
-            priority: parseFloat(new_item.priority)
-        }
-
-        // send a request to create item in the database
-        await axios.post(`http://localhost:8080/main/budgets/add_item/${new_item.budget_name}`,
-        request_data, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }).then(
-            response => { // show the user the response message
-                alert(response.data.Message)
-                window.location.reload();
-            }
-        ).catch(error => { // return error message
-            alert(error.response?.data || error.message)
-        })
     }
 
     const handleUpdateBudget = async (budget_name, e) => {
