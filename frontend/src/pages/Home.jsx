@@ -78,6 +78,10 @@ ChartJS.register(
                     `http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, 
                     { headers: { Authorization: `Bearer ${token}` } }
                 );
+                if (!response.data || !Array.isArray(response.data)) {
+                    setTransactions([]);
+                    return;
+                }
                 setTransactions(response.data);
                 console.log(response.data)
                 groupTransactionsIntoStackedBarChart(response.data);  // Ensure data updates correctly
@@ -138,6 +142,7 @@ ChartJS.register(
         let budget_data_map = {}
 
         data.forEach(t => {
+            if (!t || !t.item || !t.transactions) return;
             const budget_name = t.item.budget_name;
             const item_name = t.item.item_name;
 
@@ -148,6 +153,7 @@ ChartJS.register(
                 budget_data_map[budget_name][item_name] = { inflow: 0, outflow: 0 };
             }
             t.transactions.forEach(transaction => {
+            if (!transaction) return;
             if (transaction.type === "outflow") {
                 budget_data_map[budget_name][item_name].outflow += transaction.amount;
             } else if (transaction.type === "inflow") {
