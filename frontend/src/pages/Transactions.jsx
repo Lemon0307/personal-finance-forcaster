@@ -189,6 +189,9 @@ const Transactions = () => {
                 const csv = reader.result
                 console.log(csv)
                 const transactions = parseCSVToJSON(csv)
+                if (transactions === 1) {
+                    return
+                }
 
                 // gather import data
                 const importData = {

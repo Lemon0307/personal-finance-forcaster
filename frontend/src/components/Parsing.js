@@ -10,6 +10,7 @@ export const parseCSVToJSON = (file) => {
     const missing_columns = required_columns.filter(col => !headers.includes(col))
     if (missing_columns.length > 0) {
         alert("Please provide a CSV in the correct format: name, type, amount, date")
+        return 1
     }
 
     const column_index = {
