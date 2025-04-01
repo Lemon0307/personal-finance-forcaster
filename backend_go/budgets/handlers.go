@@ -37,44 +37,49 @@ func (budget *BudgetHandler) AddBudget(w http.ResponseWriter, r *http.Request) {
 		// return error message
 		http.Error(w, "A budget with this name already exists.", http.StatusConflict)
 	} else {
-		// add budget
-		_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
-			user_id, budgets.BudgetName)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-		// add all budget items
-		for i := 0; i < len(budgets.Items); i++ {
-			if !ItemExists(database.DB, user_id, budgets.Items[i].ItemName,
-				budgets.BudgetName) { // add item if item does not exist
-				_, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
-				item_name, description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
-					user_id,
-					budgets.BudgetName,
-					budgets.Items[i].ItemName,
-					budgets.Items[i].Description,
-					budgets.Items[i].BudgetCost,
-					budgets.Items[i].Priority)
-				if err != nil {
-					fmt.Println(err.Error())
-					http.Error(w, "The budget or item name you entered is too long", http.StatusBadRequest)
-				}
-			} else {
-				http.Error(w, `Budget item with name `+budgets.Items[i].ItemName+
-					`already exists`, http.StatusConflict)
+		// check if budget name exceed 100 characters
+		if len(budgets.BudgetName) > 100 {
+			http.Error(w, "Please enter a shorter budget name", http.StatusBadRequest)
+		} else {
+			// add budget
+			_, err := database.DB.Exec("INSERT INTO Budget (user_id, budget_name) VALUES (?, ?)",
+				user_id, budgets.BudgetName)
+			if err != nil {
+				fmt.Println(err.Error())
 			}
-		}
-		// return success message
-		w.Header().Set("Content-Type", "application/json")
-		response := Response{
-			Message:    "Successfully added budget",
-			StatusCode: 201,
-		}
-		// builds json response
-		err = json.NewEncoder(w).Encode(response)
-		if err != nil {
-			http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
-			return
+			// add all budget items
+			for i := 0; i < len(budgets.Items); i++ {
+				if !ItemExists(database.DB, user_id, budgets.Items[i].ItemName,
+					budgets.BudgetName) { // add item if item does not exist
+					_, err := database.DB.Exec(`INSERT INTO Budget_Items (user_id, budget_name,
+				item_name, description, budget_cost, priority) VALUES (?, ?, ?, ?, ?, ?)`,
+						user_id,
+						budgets.BudgetName,
+						budgets.Items[i].ItemName,
+						budgets.Items[i].Description,
+						budgets.Items[i].BudgetCost,
+						budgets.Items[i].Priority)
+					if err != nil {
+						fmt.Println(err.Error())
+						http.Error(w, "The budget or item name you entered is too long", http.StatusBadRequest)
+					}
+				} else {
+					http.Error(w, `Budget item with name `+budgets.Items[i].ItemName+
+						`already exists`, http.StatusConflict)
+				}
+			}
+			// return success message
+			w.Header().Set("Content-Type", "application/json")
+			response := Response{
+				Message:    "Successfully added budget",
+				StatusCode: 201,
+			}
+			// builds json response
+			err = json.NewEncoder(w).Encode(response)
+			if err != nil {
+				http.Error(w, "JSON response could not be encoded", http.StatusInternalServerError)
+				return
+			}
 		}
 	}
 }
@@ -292,21 +297,26 @@ func (budget *BudgetHandler) UpdateBudget(w http.ResponseWriter, r *http.Request
 		http.Error(w, "Invalid JSON format", http.StatusBadRequest)
 		return
 	}
-	// sql query to update budget in the database
-	_, err = database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
-	budget_name = ? AND user_id = ?`, budgets.BudgetName, budget_name, user_id)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// check if budget name exceed 100 characters
+	if len(budgets.BudgetName) > 100 {
+		http.Error(w, "Please enter a shorter budget name", http.StatusBadRequest)
+	} else {
+		// sql query to update budget in the database
+		_, err = database.DB.Exec(`UPDATE Budget SET budget_name = ? WHERE 
+		budget_name = ? AND user_id = ?`, budgets.BudgetName, budget_name, user_id)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 
-	// success message
-	response := Response{
-		Message:    "Successfully updated budget",
-		StatusCode: 201,
+		// success message
+		response := Response{
+			Message:    "Successfully updated budget",
+			StatusCode: 201,
+		}
+		// encode to a json response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
-	// encode to a json response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
 }
 
 func (budget *BudgetHandler) UpdateItem(w http.ResponseWriter, r *http.Request) {

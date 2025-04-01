@@ -47,8 +47,7 @@ const AddBudget = () => {
     }
 
     const handleBudgetChange = (e) => {
-        const {value} = e.target;
-        setBudgetName(value)
+        setBudgetName(e.target.value)
     }
     
     const handleItemChange = (e, index) => {
@@ -84,6 +83,7 @@ const AddBudget = () => {
                 <input 
                 type="text"
                 name="budget_name"
+                value={budgetName}
                 placeholder="Budget Name..."
                 onChange={handleBudgetChange}
                 className="py-2"

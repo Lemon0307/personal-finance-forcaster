@@ -69,6 +69,12 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 			// generate a transaction id for the transaction
 			session.Transactions[i].TransactionID = GenerateTransactionID()
 
+			// check if transaction name or transaction amount exceeds max length
+			if len(session.Transactions[i].TransactionName) > 100 ||
+				session.Transactions[i].Amount > 99999999.99 {
+				http.Error(w, "Transaction name or transaction amount is too long, please try again",
+					http.StatusBadRequest)
+			}
 			// add or subtract the current balance with transaction
 			switch session.Transactions[i].TransactionType {
 			case "inflow":

@@ -89,6 +89,7 @@ const Transactions = () => {
             alert("Please fill in all the required details.");
             return;
         }
+
         // gather all transaction data
         const requestData = {
             item: {

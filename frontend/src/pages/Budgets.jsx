@@ -117,18 +117,22 @@ const Budgets = () => {
 
     }
 
+    const handleUpdateBudgetChange = (e) => {
+        setUpdateBudget(e.target.value)
+    }
+
     const handleUpdateBudget = async (budget_name, e) => {
         if (e.key === "Enter") {
             setIsEditingBudget(false)
-            
             // update budget in the database
             await axios.put(`http://localhost:8080/main/budgets/update_budget/${budget_name}`, 
-                updateBudget, {
+                {budget_name: e.target.value}, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             }).then(response => { // return response message
                 alert(response.data.Message)
+                setUpdateBudget("")
                 window.location.reload()
             }).catch(error => { // return error message
                 alert(error.response?.data || error.message)
@@ -203,12 +207,8 @@ const Budgets = () => {
                                 type="text"
                                 name="budget_name"
                                 placeholder="Budget Name..."
-                                value = {b.budget_name}
-                                onChange = {(e) => {setUpdateBudget({
-                                    budget: {
-                                        budget_name: e.target.value
-                                    }
-                                })}}
+                                value = {updateBudget}
+                                onChange ={handleUpdateBudgetChange}
                                 onKeyDown={(e) => handleUpdateBudget(b.budget_name, e)}
                                 className="py-2"
                                 required
