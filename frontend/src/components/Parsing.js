@@ -3,16 +3,19 @@ export const parseCSVToJSON = (file) => {
     const lines = file.trim().split("\n")
     const transactions = []
 
+    // extract headers from csv
     const headers = lines[0].trim().split(",").map(h => h.toLowerCase())
 
     const required_columns = ["date", "type", "name", "amount"]
 
+    // check if csv contains all required columns from above
     const missing_columns = required_columns.filter(col => !headers.includes(col))
-    if (missing_columns.length > 0) {
+    if (missing_columns.length > 0) { // return error message if false
         alert("Please provide a CSV in the correct format: name, type, amount, date")
         return 1
     }
 
+    // store indexes for the columns
     const column_index = {
         date: headers.indexOf("date"),
         type: headers.indexOf("type"),
