@@ -105,8 +105,10 @@ const Transactions = () => {
             headers: {
                 Authorization: `Bearer ${token}`
             }
-        }).then( // appends the new transaction to the transactions state
-            setTransactions(prev => Array.isArray(prev) ? [...prev, newTransaction] : [newTransaction]) 
+        }).then(() => {
+            // appends the new transaction to the transactions state
+            setTransactions(prev => Array.isArray(prev) ? [...prev, newTransaction] : [newTransaction])             
+        }
         ).catch(error => {
             // show error message
             alert(error.response?.data || error.message)
@@ -121,7 +123,7 @@ const Transactions = () => {
             }
         })
         .then( // removes transaction from transactions state
-            setTransactions(prev => prev.filter(transaction => transaction.transaction_id !== transaction_id))
+            () => setTransactions(prev => prev.filter(transaction => transaction.transaction_id !== transaction_id))
         ).catch(error => {
             alert(error.response?.data || error.message)
         })
@@ -177,7 +179,7 @@ const Transactions = () => {
         link.click()
     }
 
-    const handleImportCSV = () => {
+    const handleImportCSV = async () => {
         // send error message if there is no csv file uploaded
         if (!csvFile) {
             alert("Please provide a csv file")
@@ -190,38 +192,42 @@ const Transactions = () => {
                 const csv = reader.result
                 // parse csv uploaded to json
                 const transactions = parseCSVToJSON(csv)
-                // if function returns an error, send error message
-                if (transactions === 1) {
+                const acceptable_types = ["inflow", "outflow"]
+                console.log(transactions)
+                // if function returns an error or errors in csv data, send error message
+                if (transactions === 1 || transactions.filter(t => !acceptable_types.includes(t.type) ||
+                        t.amount < 0).length > 0) {
                     alert("Please provide a CSV in the correct format: name, type, amount, date")
                     return
-                }
-
-                // gather import data
-                const importData = {
-                    item: {
-                        budget_name: budget_name,
-                        item_name: item_name,
-                    },
-                    transactions: transactions,
-                    monthly_costs: {
-                        month: new Date().getMonth() + 1,
-                        year: new Date().getFullYear()
+                    // check if the csv is in the correct format
+                } else {
+                    // gather import data
+                    const importData = {
+                        item: {
+                            budget_name: budget_name,
+                            item_name: item_name,
+                        },
+                        transactions: transactions,
+                        monthly_costs: {
+                            month: new Date().getMonth() + 1,
+                            year: new Date().getFullYear()
+                        }
                     }
+                    // send request to add the new imported transactions to the database
+                    await axios.post(`http://localhost:8080/main/transactions/add_transaction`, 
+                        importData,
+                        {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }).then(response => { // show success message
+                        alert(response.data.Message)
+                        // refresh screen
+                        window.location.reload()
+                    }).catch(error => { // show error message
+                        alert(error.response?.data)     
+                    })
                 }
-                // send request to add the new imported transactions to the database
-                await axios.post(`http://localhost:8080/main/transactions/add_transaction`, 
-                    importData,
-                    {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }).then(response => { // show success message
-                    alert(response.data.Message)
-                    // refresh screen
-                    window.location.reload()
-                }).catch(error => { // show error message
-                    alert(error.response?.data)     
-                })
             }
         }
     }
@@ -237,8 +243,8 @@ const Transactions = () => {
                     <option value="date">Date</option>
                 </select>
                 <select value={order.current} onChange={(e) => setOrder(e.target.value)}>
-                    <option value="asc">Ascending</option>
-                    <option value="desc">Descending</option>
+                    <option value="asc">Descending</option>
+                    <option value="desc">Ascending</option>
                 </select>
                 <button onClick={handleSort}>Sort</button>
             </div>

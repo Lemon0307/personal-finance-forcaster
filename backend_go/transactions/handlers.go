@@ -49,7 +49,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 				session.Item.ItemName,
 				user_id).Scan(&exists)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err.Error())
 			}
 
 			// if the record doesn't exist then add a record of monthly costs
@@ -62,7 +62,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 					month,
 					year)
 				if err != nil {
-					log.Fatal(err)
+					fmt.Println(err.Error())
 				}
 			}
 
@@ -74,6 +74,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 				session.Transactions[i].Amount > 99999999.99 {
 				http.Error(w, "Transaction name or transaction amount is too long, please try again",
 					http.StatusBadRequest)
+				return
 			}
 			// add or subtract the current balance with transaction
 			switch session.Transactions[i].TransactionType {
@@ -81,13 +82,13 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 				_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance + ? 
 				WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
 				if err != nil {
-					log.Fatal(err)
+					fmt.Println(err.Error())
 				}
 			case "outflow":
 				_, err = database.DB.Exec(`UPDATE User SET current_balance = current_balance - ? 
 				WHERE user_id = ?`, session.Transactions[0].Amount, user_id)
 				if err != nil {
-					log.Fatal(err)
+					fmt.Println(err.Error())
 				}
 			}
 
@@ -106,7 +107,7 @@ func (transaction *TransactionHandler) AddTransaction(w http.ResponseWriter, r *
 				session.Item.ItemName,
 				session.Item.BudgetName)
 			if err != nil {
-				log.Fatal(err)
+				fmt.Println(err.Error())
 			}
 		}
 

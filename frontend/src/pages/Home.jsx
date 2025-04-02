@@ -86,6 +86,8 @@ ChartJS.register(
                     setTransactions([]);
                     return;
                 }
+                console.log(response.data)
+
                 setTransactions(response.data);
                 // initially group transactions as stacked bar chart
                 groupTransactionsIntoStackedBarChart(response.data);
@@ -117,7 +119,8 @@ ChartJS.register(
                     label: `${d.item.item_name} - inflow`,
                     data: labels.map(label => {
                     // match the transaction to the correct x value
-                    const entry = d.transactions.find(t => 
+                    
+                    const entry = d?.transactions.find(t => 
                         new Date(t.date).toISOString().split('T')[0] === label && t.type === "inflow")
                     return entry ? entry.amount : null
                     }),
