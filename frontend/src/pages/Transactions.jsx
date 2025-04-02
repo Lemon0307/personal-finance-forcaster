@@ -154,7 +154,7 @@ const Transactions = () => {
         const rows = transactions.map(transaction => {
             return headers.map(header => {
                 let value = transaction[header];
-    
+
                 // Check if the current field is a date and format it
                 if (header.toLowerCase().includes("date") && value) {
                     const date = new Date(value);
@@ -162,7 +162,7 @@ const Transactions = () => {
                         value = date.toLocaleDateString("en-GB"); // Converts to dd/mm/yyyy format
                     }
                 }
-    
+
                 return value;
             }).join(",");
         })
@@ -178,6 +178,7 @@ const Transactions = () => {
     }
 
     const handleImportCSV = () => {
+        // send error message if there is no csv file uploaded
         if (!csvFile) {
             alert("Please provide a csv file")
         } else {
@@ -187,9 +188,11 @@ const Transactions = () => {
             reader.readAsText(csvFile);
             reader.onload = async () => {
                 const csv = reader.result
-                console.log(csv)
+                // parse csv uploaded to json
                 const transactions = parseCSVToJSON(csv)
+                // if function returns an error, send error message
                 if (transactions === 1) {
+                    alert("Please provide a CSV in the correct format: name, type, amount, date")
                     return
                 }
 

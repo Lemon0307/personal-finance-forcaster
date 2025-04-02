@@ -11,7 +11,6 @@ export const parseCSVToJSON = (file) => {
     // check if csv contains all required columns from above
     const missing_columns = required_columns.filter(col => !headers.includes(col))
     if (missing_columns.length > 0) { // return error message if false
-        alert("Please provide a CSV in the correct format: name, type, amount, date")
         return 1
     }
 

@@ -5,7 +5,11 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
+type Account struct {
+	UserID             string               `json:"user_id"`
+	User               User                 `json:"user"`
+	Security_Questions []Security_Questions `json:"security_questions"`
+}
 type User struct {
 	Username        string `json:"username"`
 	Email           string `json:"email"`
@@ -19,12 +23,6 @@ type User struct {
 type Security_Questions struct {
 	Question string `json:"question"`
 	Answer   string `json:"answer"`
-}
-
-type Account struct {
-	UserID             string               `json:"user_id"`
-	User               User                 `json:"user"`
-	Security_Questions []Security_Questions `json:"security_questions"`
 }
 
 type Date struct {

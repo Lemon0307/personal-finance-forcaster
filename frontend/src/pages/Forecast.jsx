@@ -19,6 +19,7 @@ const Forecast = () => {
 
     const [budget, setBudget] = useState("")
     const [months, setMonths] = useState(1)
+    // defines the structure of the returned data for debugging
     const [items, setItems] = useState([
         {
             "forecasted_earning": [
@@ -97,7 +98,6 @@ const Forecast = () => {
                     item_name: rb.item_name,
                     recommended_budget: rb.recommended_budget
                 })))
-                console.log(response.data)
             } else {
                 alert("data isn't an array")
                 setItems([])
@@ -141,7 +141,7 @@ const Forecast = () => {
         const dateB = new Date(b + '-01');
         return dateA - dateB;
     });
-    
+
     console.log(labels)
     // make datasets for each item
     const datasets = items.flatMap(item => {

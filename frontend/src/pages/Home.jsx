@@ -30,6 +30,7 @@ ChartJS.register(
     const [chartToggle, setChartToggle] = useState("bar");
     const [chartData, setChartData] = useState({ labels: [], datasets: [] });
     const [options, setOptions] = useState()
+    // options for displaying the line chart: x-axis: Transaction date, y-axis: amount
     const optionLine = {
         responsive: true,
         plugins: {
@@ -48,6 +49,7 @@ ChartJS.register(
         }
     };
 
+    // options for stacked bar chart: x-axis: budgets, y-axis: total transaction amount
     const optionBar = {
         responsive: true,
         plugins: {
@@ -71,31 +73,36 @@ ChartJS.register(
             redirect('/login');
         }
 
+        // make sure get transactions is asynchronous
         const getTransactions = async () => {
             let date = new Date();
-            try {
-                const response = await axios.get(
-                    `http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, 
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
+            // get request to retrieve all transactions of the current month
+            await axios.get(
+                `http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, 
+                { headers: { Authorization: `Bearer ${token}` } }
+            ).then(response => {
+                // check if response data is null or is an array
                 if (!response.data || !Array.isArray(response.data)) {
                     setTransactions([]);
                     return;
                 }
                 setTransactions(response.data);
-                console.log(response.data)
-                groupTransactionsIntoStackedBarChart(response.data);  // Ensure data updates correctly
-            } catch (error) {
-                alert(error.response?.data || error.message);
-            }
-        };
+                // initially group transactions as stacked bar chart
+                groupTransactionsIntoStackedBarChart(response.data);
+            }).catch(error => { // return error message if there is any
+                alert(error.response?.data || error.message); 
+            })
 
+        };
         getTransactions();
     }, [redirect, token]);
 
     const groupTransactionsIntoLineChart = (data) => {
+        // return nothing is there is no data present
         if (!data || data.length === 0) return
 
+        // extract unique transaction dates from each transactions
+        // and sort then in date order
         const labels = Array.from(new Set(
             data.flatMap(d => [...d.transactions].map(t => 
                 new Date(t.date).toISOString().split('T')[0]
@@ -106,20 +113,25 @@ ChartJS.register(
             const colour = getRandomColour()
             return [
                 {
-                 label: `${d.item.item_name} - inflow`,
-                 data: labels.map(label => {
+                    // make label for inflow transactions
+                    label: `${d.item.item_name} - inflow`,
+                    data: labels.map(label => {
+                    // match the transaction to the correct x value
                     const entry = d.transactions.find(t => 
                         new Date(t.date).toISOString().split('T')[0] === label && t.type === "inflow")
                     return entry ? entry.amount : null
-                 }),
-                 borderColor: colour,
-                 backgroundColor: "rgba(0,0,0,0)",
-                 tension: 0.3,
-                 borderDash: [5, 5]
+                    }),
+                    borderColor: colour,
+                    backgroundColor: "rgba(0,0,0,0)",
+                    tension: 0.3,
+                    // line is dotted
+                    borderDash: [5, 5]
                 },
                 {
+                // make label for outflow transactions
                 label: `${d.item.item_name} - outflow`,
                 data: labels.map(label => {
+                    // match the transaction to the correct x value
                     const entry = d.transactions.find(t => 
                         new Date(t.date).toISOString().split('T')[0] === label && t.type === "outflow")
                     return entry ? entry.amount : null
@@ -127,47 +139,70 @@ ChartJS.register(
                 borderColor: colour,
                 backgroundColor: "rgba(0,0,0,0)",
                 tension: 0.3,
+                // line is solid
                 borderDash: []
                 }
             ]
         })
 
+        // replace the options with the options for a line chart
         setOptions(optionLine)
         setChartData({labels, datasets})
     }
 
     const groupTransactionsIntoStackedBarChart = (data) => {
+        // return nothing is there is no data present
         if (!data || data.length === 0) return
 
         let budget_data_map = {}
 
         data.forEach(t => {
+            // return nothing if transaction data is empty
             if (!t || !t.item || !t.transactions) return;
             const budget_name = t.item.budget_name;
             const item_name = t.item.item_name;
 
+            // create a key value pair for budget name 
+            // if it doesn't exist in the hashmap
             if (!budget_data_map[budget_name]) {
                 budget_data_map[budget_name] = {};
             }
+            // create a key value pair for item name 
+            // inside its corresponding budget name
+            // if it doesn't exist in the hashmap
             if (!budget_data_map[budget_name][item_name]) {
                 budget_data_map[budget_name][item_name] = { inflow: 0, outflow: 0 };
             }
             t.transactions.forEach(transaction => {
             if (!transaction) return;
-            if (transaction.type === "outflow") {
-                budget_data_map[budget_name][item_name].outflow += transaction.amount;
-            } else if (transaction.type === "inflow") {
+            // checks if the current transaction is an inflow 
+            // or outflow
+            switch (transaction.type) {
+                case "outflow":
+                    // increment the amount to inflow
+                    budget_data_map[budget_name][item_name].outflow += transaction.amount;
+                    break
+                case "inflow":
+                    // increment the amount to outflow
                 budget_data_map[budget_name][item_name].inflow += transaction.amount;
-            }                
+                    break
+                default:
+                    break
+                }            
             })
         });
 
+        // extract the keys (budget names) in the hashmap
         const labels = Object.keys(budget_data_map);
         const budget_items = new Set();
+
+        // add the corresponding items to the budgets
         Object.values(budget_data_map).forEach(items => {
             Object.keys(items).forEach(item => budget_items.add(item));
         });
 
+        // arrange the data into a the dataset
+        // and set their colours
         const datasets = [
             ...Array.from(budget_items).map((item) => ({
                 label: `${item} (inflow)`,
@@ -181,10 +216,13 @@ ChartJS.register(
             }))
         ];
 
+        // replace the options with options for a stacked bar chart
         setOptions(optionBar)
         setChartData({ labels, datasets });  // Update chartData state
     };
 
+    // toggles between line and stacked bar depending 
+    // on the user's input
     useEffect(() => {
         if (chartToggle === "line") {
             groupTransactionsIntoLineChart(transactions)
