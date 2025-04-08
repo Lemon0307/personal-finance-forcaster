@@ -78,7 +78,8 @@ ChartJS.register(
             let date = new Date();
             // get request to retrieve all transactions of the current month
             await axios.get(
-                `http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, 
+                // `http://localhost:8080/main/transactions/${date.getFullYear()}/${date.getMonth() + 1}`, 
+                `http://localhost:8080/main/transactions/${date.getFullYear()}/3`, 
                 { headers: { Authorization: `Bearer ${token}` } }
             ).then(response => {
                 // check if response data is null or is an array
@@ -87,7 +88,6 @@ ChartJS.register(
                     return;
                 }
                 console.log(response.data)
-
                 setTransactions(response.data);
                 // initially group transactions as stacked bar chart
                 groupTransactionsIntoStackedBarChart(response.data);
@@ -106,12 +106,13 @@ ChartJS.register(
         // extract unique transaction dates from each transactions
         // and sort then in date order
         const labels = Array.from(new Set(
-            data.flatMap(d => [...d.transactions].map(t => 
+            data.flatMap(d => Array.isArray(d.transactions) ? d.transactions.map(t => 
                 new Date(t.date).toISOString().split('T')[0]
-            ).sort((a, b) => new Date(a) - new Date(b)))
+            ).sort((a, b) => new Date(a) - new Date(b)) : [])
         ))
 
         const datasets = data.flatMap(d => {
+            if (!Array.isArray(d.transactions)) return [];
             const colour = getRandomColour()
             return [
                 {
@@ -119,8 +120,7 @@ ChartJS.register(
                     label: `${d.item.item_name} - inflow`,
                     data: labels.map(label => {
                     // match the transaction to the correct x value
-                    
-                    const entry = d?.transactions.find(t => 
+                    const entry = d.transactions.find(t => 
                         new Date(t.date).toISOString().split('T')[0] === label && t.type === "inflow")
                     return entry ? entry.amount : null
                     }),
